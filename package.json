@@ -1,0 +1,16 @@
+{
+  "name": "elcuaderno",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "build:shared": "npm run build -w @elcuaderno/shared",
+    "dev:api": "npm run dev -w @elcuaderno/api",
+    "dev:web": "npm run dev -w @elcuaderno/web",
+    "test": "npm test -w @elcuaderno/api",
+    "build": "npm run build -w @elcuaderno/shared && npm run build -w @elcuaderno/api && npm run build -w @elcuaderno/web"
+  }
+}

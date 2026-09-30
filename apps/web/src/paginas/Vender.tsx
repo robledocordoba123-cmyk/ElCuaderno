@@ -125,7 +125,7 @@ export function Vender() {
         )}
       </section>
 
-      <aside className="mt-6 lg:mt-0">
+      <aside id="venta" className="mt-6 scroll-mt-20 lg:mt-0">
         <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm lg:sticky lg:top-8">
           <h2 className="mb-3 flex items-center gap-2 font-bold text-stone-900">
             <ShoppingCart size={18} /> Venta actual
@@ -214,6 +214,19 @@ export function Vender() {
           </Boton>
         </div>
       </aside>
+
+      {/* En el celular el carrito queda abajo: esta barra lleva a él con un toque. */}
+      {lineas.length > 0 && (
+        <a
+          href="#venta"
+          className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-lg lg:hidden"
+        >
+          <span className="flex items-center gap-2 text-sm">
+            <ShoppingCart size={18} /> {lineas.reduce((s, l) => s + l.cantidad, 0)} productos
+          </span>
+          <span className="font-bold">{formatearPesos(total)} · Ver venta</span>
+        </a>
+      )}
     </div>
   );
 }

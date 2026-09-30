@@ -1,0 +1,1 @@
+{"root":["./src/main.tsx","./src/sesion.tsx","./src/api/cliente.ts","./src/componentes/marco.tsx","./src/componentes/ui.tsx","./src/paginas/acceso.tsx","./src/paginas/caja.tsx","./src/paginas/fiados.tsx","./src/paginas/inventario.tsx","./src/paginas/vender.tsx"],"version":"5.9.3"}

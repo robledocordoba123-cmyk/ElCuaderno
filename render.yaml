@@ -1,0 +1,27 @@
+# API de ElCuaderno en Render (Blueprint). En Render: New → Blueprint → este repositorio.
+# La base de datos vive en Neon; su enlace se pega a mano en DATABASE_URL y nunca va en el repositorio.
+services:
+  - type: web
+    name: elcuaderno-api
+    runtime: node
+    region: ohio            # misma región que la base de datos en Neon
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build:shared && npm run build -w @elcuaderno/api
+    # Aplica migraciones, recarga la tienda de demostración y arranca la API.
+    startCommand: npm run start:demo -w @elcuaderno/api
+    healthCheckPath: /api/salud
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22"
+      - key: ZONA_HORARIA
+        value: America/Bogota
+      - key: CORS_ORIGIN
+        value: https://elcuaderno-demo.vercel.app
+      # Render genera un secreto largo y aleatorio; nadie necesita conocerlo.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

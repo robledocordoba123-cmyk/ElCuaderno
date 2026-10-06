@@ -71,7 +71,7 @@ export function Fiados() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className={`text-lg font-bold ${c.deuda > 0 ? 'text-stone-900' : 'text-emerald-600'}`}>{c.deuda > 0 ? formatearPesos(c.deuda) : 'Al día'}</p>
+                      <p className={`font-mono text-lg font-bold ${c.deuda > 0 ? 'text-stone-900' : 'text-emerald-600'}`}>{c.deuda > 0 ? formatearPesos(c.deuda) : 'Al día'}</p>
                     </div>
                     <ChevronRight size={18} className="text-stone-300" />
                   </Tarjeta>
@@ -125,13 +125,13 @@ function DetalleCliente({ id, alCerrar }: { id: number; alCerrar: () => void }) 
       ) : (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-2 text-center">
-            <div className="rounded-xl bg-stone-100 p-3">
+            <div className="rounded-lg border border-dashed border-stone-300 bg-stone-100 p-3">
               <p className="text-xs text-stone-500">Debe</p>
-              <p className="text-xl font-bold text-stone-900">{formatearPesos(c.deuda)}</p>
+              <p className="font-mono text-xl font-bold text-stone-900">{formatearPesos(c.deuda)}</p>
             </div>
-            <div className="rounded-xl bg-stone-100 p-3">
+            <div className="rounded-lg border border-dashed border-stone-300 bg-stone-100 p-3">
               <p className="text-xs text-stone-500">Le queda de cupo</p>
-              <p className="text-xl font-bold text-stone-900">{formatearPesos(c.disponible)}</p>
+              <p className="font-mono text-xl font-bold text-stone-900">{formatearPesos(c.disponible)}</p>
             </div>
           </div>
           {c.telefono && (

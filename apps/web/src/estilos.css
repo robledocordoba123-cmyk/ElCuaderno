@@ -1,7 +1,39 @@
 @import 'tailwindcss';
 
+/*
+  Identidad visual: el cuaderno de la tienda.
+  Papel crema con renglones, tinta azul oscura, resaltador amarillo y precios en letra de caja registradora.
+  La paleta "stone" se reemplaza por tonos de papel y tinta, y "amber" por el amarillo del resaltador.
+*/
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-stone-50: #fdfaf2;
+  --color-stone-100: #f4edda;
+  --color-stone-200: #e6dcc3;
+  --color-stone-300: #cfc2a2;
+  --color-stone-400: #9c9580;
+  --color-stone-500: #6d6b63;
+  --color-stone-600: #4d5165;
+  --color-stone-700: #383e57;
+  --color-stone-800: #262e4a;
+  --color-stone-900: #1b2340;
+  --color-stone-950: #111731;
+
+  --color-amber-50: #fffae3;
+  --color-amber-100: #fff3c2;
+  --color-amber-200: #ffe88f;
+  --color-amber-300: #ffdc5c;
+  --color-amber-400: #ffcf2e;
+  --color-amber-500: #f5bd00;
+  --color-amber-600: #c48f00;
+  --color-amber-700: #946b05;
+  --color-amber-800: #6e5008;
+  --color-amber-900: #4d3907;
+  --color-amber-950: #2e2204;
+
+  --color-margen: #e0563f;
 }
 
 html {
@@ -9,6 +41,25 @@ html {
 }
 
 body {
-  background: var(--color-stone-100);
   color: var(--color-stone-900);
+  background-color: var(--color-stone-100);
+  /* Renglones del cuaderno */
+  background-image: repeating-linear-gradient(transparent 0 31px, rgb(27 35 64 / 0.07) 31px 32px);
+  background-attachment: fixed;
+}
+
+/* Sombra "de calcomanía": un borde de tinta desplazado, sin difuminar. */
+@utility sombra-tinta {
+  box-shadow: 3px 3px 0 0 var(--color-stone-900);
+}
+@utility sombra-papel {
+  box-shadow: 3px 3px 0 0 var(--color-stone-300);
+}
+
+/* Borde inferior en zigzag, como la tirilla de una caja registradora. */
+@utility tirilla {
+  --diente: 10px;
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--diente) 51% repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--diente) / 2 + 1px) no-repeat;
 }

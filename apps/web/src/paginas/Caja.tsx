@@ -32,20 +32,20 @@ export function Caja() {
     <>
       <Encabezado titulo="Caja del día" detalle={nombreDia(dia)} />
       <div className="mb-5 flex items-center gap-2">
-        <button onClick={() => setDia(moverDia(dia, -1))} className="rounded-xl border border-stone-200 bg-white p-2" aria-label="Día anterior">
+        <button onClick={() => setDia(moverDia(dia, -1))} className="rounded-lg border-2 border-stone-300 bg-stone-50 hover:border-stone-900 p-2" aria-label="Día anterior">
           <ChevronLeft size={18} />
         </button>
         <button
           onClick={() => setDia(hoy)}
           disabled={dia === hoy}
-          className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
+          className="rounded-lg border-2 border-stone-300 bg-stone-50 hover:border-stone-900 px-3 py-2 text-sm font-medium disabled:opacity-50"
         >
           Hoy
         </button>
         <button
           onClick={() => setDia(moverDia(dia, 1))}
           disabled={dia >= hoy}
-          className="rounded-xl border border-stone-200 bg-white p-2 disabled:opacity-40"
+          className="rounded-lg border-2 border-stone-300 bg-stone-50 hover:border-stone-900 p-2 disabled:opacity-40"
           aria-label="Día siguiente"
         >
           <ChevronRight size={18} />
@@ -57,11 +57,11 @@ export function Caja() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Tarjeta className="bg-amber-400! border-amber-400! sm:col-span-2 lg:col-span-1">
+            <Tarjeta className="border-2! border-stone-900! bg-amber-400! sombra-tinta sm:col-span-2 lg:col-span-1">
               <p className="flex items-center gap-2 text-sm font-medium text-amber-950">
                 <Wallet size={16} /> Debe haber en el cajón
               </p>
-              <p className="mt-1 text-3xl font-bold text-stone-950">{formatearPesos(r.enCaja)}</p>
+              <p className="mt-1 font-mono text-3xl font-bold tracking-tight text-stone-950">{formatearPesos(r.enCaja)}</p>
               <p className="text-xs text-amber-900">Ventas en efectivo + abonos</p>
             </Tarjeta>
             <Dato icono={TrendingUp} titulo="Ganancia" valor={r.ganancia} nota={`${r.ventas} ventas`} />
@@ -128,7 +128,7 @@ function Dato({ icono: Icono, titulo, valor, nota }: { icono: typeof Wallet; tit
       <p className="flex items-center gap-2 text-sm text-stone-500">
         <Icono size={16} /> {titulo}
       </p>
-      <p className="mt-1 text-2xl font-bold text-stone-900">{formatearPesos(valor)}</p>
+      <p className="mt-1 font-mono text-2xl font-bold tracking-tight text-stone-900">{formatearPesos(valor)}</p>
       {nota && <p className="text-xs text-stone-400">{nota}</p>}
     </Tarjeta>
   );

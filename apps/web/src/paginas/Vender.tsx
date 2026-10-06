@@ -5,6 +5,7 @@ import { Minus, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { api, ErrorApi } from '../api/cliente';
 import { Aviso, Boton, Cargando, Encabezado } from '../componentes/ui';
+import { useSesion } from '../sesion';
 
 const MEDIOS: { valor: MedioDePago; texto: string }[] = [
   { valor: 'EFECTIVO', texto: 'Efectivo' },
@@ -14,6 +15,7 @@ const MEDIOS: { valor: MedioDePago; texto: string }[] = [
 
 export function Vender() {
   const queryClient = useQueryClient();
+  const { sesion } = useSesion();
   const [busqueda, setBusqueda] = useState('');
   const [carrito, setCarrito] = useState<Map<number, number>>(new Map());
   const [medio, setMedio] = useState<MedioDePago>('EFECTIVO');
@@ -75,17 +77,17 @@ export function Vender() {
   }
 
   return (
-    <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6">
+    <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-8">
       <section>
         <Encabezado titulo="Vender" detalle="Toca un producto para agregarlo" />
-        <label className="relative mb-4 block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+        <label className="relative mb-5 block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" size={18} />
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar producto…"
             aria-label="Buscar producto"
-            className="w-full rounded-xl border border-stone-200 bg-white py-3 pl-10 pr-3 outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+            className="w-full rounded-lg border-2 border-stone-300 bg-stone-50 py-3 pl-10 pr-3 outline-none transition focus:border-stone-900 focus:bg-white"
           />
         </label>
 
@@ -100,21 +102,23 @@ export function Vender() {
               const agotado = p.stock === 0;
               return (
                 <li key={p.id}>
+                  {/* Cada producto es una etiqueta de precio, con su huequito para colgarla. */}
                   <button
                     onClick={() => cambiar(p.id, 1)}
                     disabled={agotado || enCarrito >= p.stock}
-                    className={`relative flex h-full w-full flex-col rounded-2xl border bg-white p-3 text-left shadow-sm transition active:scale-[.98] disabled:opacity-50 ${
-                      enCarrito ? 'border-amber-400 ring-2 ring-amber-200' : 'border-stone-200 hover:border-amber-300'
+                    className={`relative flex h-full w-full flex-col rounded-lg border-2 p-3 pt-4 text-left transition active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 ${
+                      enCarrito ? 'border-stone-900 bg-amber-200 sombra-tinta' : 'border-stone-300 bg-stone-50 sombra-papel hover:border-stone-900'
                     }`}
                   >
+                    <span className="absolute left-3 top-2 h-1.5 w-1.5 rounded-full border border-stone-400 bg-stone-100" aria-hidden />
                     {enCarrito > 0 && (
-                      <span className="absolute -right-1.5 -top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-amber-500 px-1.5 text-xs font-bold text-stone-950">
+                      <span className="absolute -right-2 -top-2 grid h-7 min-w-7 place-items-center rounded-full border-2 border-stone-900 bg-stone-900 px-1.5 font-mono text-xs font-bold text-amber-300">
                         {enCarrito}
                       </span>
                     )}
-                    <span className="line-clamp-2 text-sm font-medium text-stone-800">{p.nombre}</span>
-                    <span className="mt-auto pt-2 text-base font-bold text-stone-900">{formatearPesos(p.precio)}</span>
-                    <span className={`text-xs ${p.bajoStock ? 'font-medium text-red-600' : 'text-stone-400'}`}>
+                    <span className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-stone-800">{p.nombre}</span>
+                    <span className="mt-auto pt-2 font-mono text-lg font-bold tracking-tight text-stone-900">{formatearPesos(p.precio)}</span>
+                    <span className={`text-xs ${p.bajoStock ? 'font-semibold text-margen' : 'text-stone-500'}`}>
                       {agotado ? 'Agotado' : `Quedan ${p.stock}`}
                     </span>
                   </button>
@@ -125,93 +129,108 @@ export function Vender() {
         )}
       </section>
 
-      <aside id="venta" className="mt-6 scroll-mt-20 lg:mt-0">
-        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm lg:sticky lg:top-8">
-          <h2 className="mb-3 flex items-center gap-2 font-bold text-stone-900">
-            <ShoppingCart size={18} /> Venta actual
-          </h2>
-
-          {ultimaVenta && (
-            <div className="mb-3">
-              <Aviso tipo="exito">
-                Venta #{ultimaVenta.id} registrada por {formatearPesos(ultimaVenta.total)}
-                {ultimaVenta.cliente ? ` · fiado a ${ultimaVenta.cliente}` : ''}.
-              </Aviso>
+      <aside id="venta" className="mt-8 scroll-mt-24 lg:mt-0">
+        {/* La venta actual es la tirilla de la caja registradora. */}
+        <div className="drop-shadow-[0_8px_16px_rgb(27_35_64/0.16)] lg:sticky lg:top-24">
+          <div className="tirilla bg-white px-5 pb-8 pt-5 font-mono text-sm text-stone-900">
+            <div className="text-center">
+              <p className="flex items-center justify-center gap-2 font-sans text-base font-extrabold">
+                <ShoppingCart size={17} /> Venta actual
+              </p>
+              <p className="text-xs uppercase tracking-wider text-stone-500">{sesion?.usuario.tienda}</p>
             </div>
-          )}
+            <div className="my-3 border-t-2 border-dashed border-stone-300" />
 
-          {lineas.length === 0 ? (
-            <p className="py-6 text-center text-sm text-stone-400">Todavía no hay productos.</p>
-          ) : (
-            <ul className="divide-y divide-stone-100">
-              {lineas.map(({ producto, cantidad }) => (
-                <li key={producto.id} className="flex items-center gap-2 py-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-stone-800">{producto.nombre}</p>
-                    <p className="text-xs text-stone-500">{formatearPesos(producto.precio * cantidad)}</p>
-                  </div>
-                  <button onClick={() => cambiar(producto.id, -1)} className="rounded-lg border border-stone-200 p-1.5" aria-label={`Quitar uno de ${producto.nombre}`}>
-                    {cantidad === 1 ? <Trash2 size={14} /> : <Minus size={14} />}
-                  </button>
-                  <span className="w-6 text-center text-sm font-semibold">{cantidad}</span>
-                  <button
-                    onClick={() => cambiar(producto.id, 1)}
-                    disabled={cantidad >= producto.stock}
-                    className="rounded-lg border border-stone-200 p-1.5 disabled:opacity-40"
-                    aria-label={`Agregar uno de ${producto.nombre}`}
-                  >
-                    <Plus size={14} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+            {ultimaVenta && (
+              <div className="mb-3 font-sans">
+                <Aviso tipo="exito">
+                  Venta #{ultimaVenta.id} registrada por {formatearPesos(ultimaVenta.total)}
+                  {ultimaVenta.cliente ? ` · fiado a ${ultimaVenta.cliente}` : ''}.
+                </Aviso>
+              </div>
+            )}
 
-          <div className="mt-4 grid grid-cols-3 gap-1 rounded-xl bg-stone-100 p-1" role="radiogroup" aria-label="Forma de pago">
-            {MEDIOS.map((m) => (
-              <button
-                key={m.valor}
-                role="radio"
-                aria-checked={medio === m.valor}
-                onClick={() => setMedio(m.valor)}
-                className={`rounded-lg py-2 text-sm font-semibold transition ${medio === m.valor ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500'}`}
-              >
-                {m.texto}
-              </button>
-            ))}
-          </div>
-
-          {medio === 'FIADO' && (
-            <label className="mt-3 block">
-              <span className="mb-1 block text-sm font-medium text-stone-700">¿A quién se le fía?</span>
-              <select
-                value={clienteId ?? ''}
-                onChange={(e) => setClienteId(e.target.value ? Number(e.target.value) : undefined)}
-                className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5"
-              >
-                <option value="">Escoge el cliente…</option>
-                {clientes.data?.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre} · disponible {formatearPesos(c.disponible)}
-                  </option>
+            {lineas.length === 0 ? (
+              <p className="py-6 text-center text-xs uppercase tracking-wider text-stone-400">Todavía no hay productos</p>
+            ) : (
+              <ul className="space-y-2.5">
+                {lineas.map(({ producto, cantidad }) => (
+                  <li key={producto.id} className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-medium">{producto.nombre}</p>
+                      <p className="text-xs text-stone-500">
+                        {cantidad} x {formatearPesos(producto.precio)}
+                      </p>
+                    </div>
+                    <span className="text-right text-[13px] font-bold">{formatearPesos(producto.precio * cantidad)}</span>
+                    <div className="flex items-center rounded-md border border-stone-300">
+                      <button onClick={() => cambiar(producto.id, -1)} className="p-1.5 hover:bg-stone-100" aria-label={`Quitar uno de ${producto.nombre}`}>
+                        {cantidad === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
+                      </button>
+                      <button
+                        onClick={() => cambiar(producto.id, 1)}
+                        disabled={cantidad >= producto.stock}
+                        className="border-l border-stone-300 p-1.5 hover:bg-stone-100 disabled:opacity-40"
+                        aria-label={`Agregar uno de ${producto.nombre}`}
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  </li>
                 ))}
-              </select>
-            </label>
-          )}
+              </ul>
+            )}
 
-          {error && (
-            <div className="mt-3">
-              <Aviso>{error}</Aviso>
+            <div className="my-4 border-t-2 border-dashed border-stone-300" />
+
+            <div className="grid grid-cols-3 gap-1.5 font-sans" role="radiogroup" aria-label="Forma de pago">
+              {MEDIOS.map((m) => (
+                <button
+                  key={m.valor}
+                  role="radio"
+                  aria-checked={medio === m.valor}
+                  onClick={() => setMedio(m.valor)}
+                  className={`rounded-md border-2 py-1.5 text-sm font-bold transition ${
+                    medio === m.valor ? 'border-stone-900 bg-stone-900 text-amber-300' : 'border-stone-200 text-stone-500 hover:border-stone-400'
+                  }`}
+                >
+                  {m.texto}
+                </button>
+              ))}
             </div>
-          )}
 
-          <div className="mt-4 flex items-center justify-between">
-            <span className="text-sm text-stone-500">Total</span>
-            <span className="text-2xl font-bold text-stone-900">{formatearPesos(total)}</span>
+            {medio === 'FIADO' && (
+              <label className="mt-3 block font-sans">
+                <span className="mb-1 block text-sm font-semibold text-stone-700">¿A quién se le fía?</span>
+                <select
+                  value={clienteId ?? ''}
+                  onChange={(e) => setClienteId(e.target.value ? Number(e.target.value) : undefined)}
+                  className="w-full rounded-lg border-2 border-stone-300 bg-stone-50 px-3 py-2.5 focus:border-stone-900"
+                >
+                  <option value="">Escoge el cliente…</option>
+                  {clientes.data?.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre} · disponible {formatearPesos(c.disponible)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {error && (
+              <div className="mt-3 font-sans">
+                <Aviso>{error}</Aviso>
+              </div>
+            )}
+
+            <div className="mt-4 flex items-baseline justify-between">
+              <span className="text-xs font-bold uppercase tracking-widest">Total</span>
+              <span className="text-3xl font-bold tracking-tight">{formatearPesos(total)}</span>
+            </div>
+            <Boton onClick={alCobrar} disabled={lineas.length === 0 || cobrar.isPending} className="mt-4 w-full py-3 font-sans text-base">
+              {cobrar.isPending ? 'Registrando…' : medio === 'FIADO' ? 'Anotar en el cuaderno' : 'Cobrar'}
+            </Boton>
           </div>
-          <Boton onClick={alCobrar} disabled={lineas.length === 0 || cobrar.isPending} className="mt-3 w-full py-3 text-base">
-            {cobrar.isPending ? 'Registrando…' : medio === 'FIADO' ? 'Anotar en el cuaderno' : 'Cobrar'}
-          </Boton>
         </div>
       </aside>
 
@@ -219,12 +238,12 @@ export function Vender() {
       {lineas.length > 0 && (
         <a
           href="#venta"
-          className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-2xl bg-stone-900 px-4 py-3 text-white shadow-lg lg:hidden"
+          className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-lg border-2 border-stone-900 bg-amber-400 px-4 py-3 text-stone-900 sombra-tinta lg:hidden"
         >
-          <span className="flex items-center gap-2 text-sm">
+          <span className="flex items-center gap-2 text-sm font-semibold">
             <ShoppingCart size={18} /> {lineas.reduce((s, l) => s + l.cantidad, 0)} productos
           </span>
-          <span className="font-bold">{formatearPesos(total)} · Ver venta</span>
+          <span className="font-mono font-bold">{formatearPesos(total)} · Ver venta</span>
         </a>
       )}
     </div>

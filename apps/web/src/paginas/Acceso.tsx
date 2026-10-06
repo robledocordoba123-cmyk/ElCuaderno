@@ -46,7 +46,7 @@ export function Acceso() {
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <div className="mx-auto w-full max-w-sm">
           <Logo />
-          <h1 className="mt-10 text-3xl font-bold tracking-tight text-stone-900">Abre tu cuaderno</h1>
+          <h1 className="mt-10 text-4xl font-extrabold tracking-tight text-stone-900">Abre tu cuaderno</h1>
           <p className="mt-1 text-stone-500">Ventas, inventario y fiados de la tienda, desde el celular.</p>
 
           <form onSubmit={alEnviar} className="mt-8 space-y-4" noValidate>
@@ -66,9 +66,9 @@ export function Acceso() {
           </form>
 
           {MODO_DEMO && (
-            <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-900">¿Solo quieres probarla?</p>
-              <p className="mb-3 text-xs text-amber-800">Entra a la Tienda Doña Rosa con una semana de ventas de ejemplo.</p>
+            <div className="mt-8 rounded-lg border-2 border-dashed border-stone-400 bg-amber-100 p-4">
+              <p className="text-sm font-bold text-stone-900">¿Solo quieres probarla?</p>
+              <p className="mb-3 text-xs text-stone-600">Entra a la Tienda Doña Rosa con una semana de ventas de ejemplo.</p>
               <div className="grid grid-cols-2 gap-2">
                 <Boton variante="secundario" disabled={enviando} onClick={() => void ingresar({ email: DEMO.dueno, password: DEMO.clave })}>
                   <Store size={16} /> Como dueña
@@ -82,18 +82,26 @@ export function Acceso() {
         </div>
       </div>
 
-      <div className="relative hidden overflow-hidden bg-amber-400 md:block">
-        {/* Renglones de cuaderno */}
-        <div
-          className="absolute inset-0 opacity-60"
-          style={{ backgroundImage: 'repeating-linear-gradient(transparent 0 38px, rgba(120,53,15,.25) 38px 40px)' }}
-        />
-        <div className="absolute inset-y-0 left-16 w-0.5 bg-red-500/60" />
-        <div className="relative flex h-full flex-col justify-end p-12 text-stone-950">
-          <p className="max-w-md text-3xl font-bold leading-tight">"Anótemelo en el cuaderno, vecina."</p>
-          <p className="mt-3 max-w-md text-stone-800">
-            Ahora el cuaderno sabe cuánto debe cada quien, qué se está acabando y cuánto se ganó hoy.
-          </p>
+      {/* Portada del cuaderno: tapa de tinta, lomo amarillo, resorte y etiqueta. */}
+      <div className="relative hidden overflow-hidden bg-stone-900 md:block">
+        <div className="absolute inset-y-0 left-0 w-10 bg-amber-400" />
+        <div className="absolute inset-y-0 left-10 flex w-6 flex-col justify-around py-6" aria-hidden>
+          {Array.from({ length: 14 }, (_, i) => (
+            <span key={i} className="h-2.5 w-6 rounded-full border-2 border-stone-400 bg-stone-950" />
+          ))}
+        </div>
+        <div className="absolute inset-y-0 right-20 w-3 bg-stone-950/60" aria-hidden />
+        <div className="relative flex h-full items-center justify-center p-16 pl-24">
+          <div className="w-full max-w-md -rotate-2 rounded-md border-2 border-stone-900 bg-stone-50 p-8 shadow-[6px_6px_0_0_var(--color-amber-400)]">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-stone-500">Tienda de barrio · 2026</p>
+            <div className="my-4 border-t-2 border-dashed border-stone-300" />
+            <p className="text-3xl font-extrabold leading-tight text-stone-900">
+              “Anótemelo en el <span className="bg-amber-300 px-1">cuaderno</span>, vecina.”
+            </p>
+            <p className="mt-4 text-stone-600">
+              Ahora el cuaderno sabe cuánto debe cada quien, qué se está acabando y cuánto se ganó hoy.
+            </p>
+          </div>
         </div>
       </div>
     </div>

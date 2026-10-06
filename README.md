@@ -8,11 +8,11 @@ En la tienda de barrio se vende fiado y se anota en un cuaderno. Ahí se pierden
 
 **Demo en vivo:** [elcuaderno-demo.vercel.app](https://elcuaderno-demo.vercel.app). Entra con un clic como **dueña** o como **cajero** de la "Tienda Doña Rosa", que tiene una semana de ventas de ejemplo. La API está en un plan gratuito: si nadie la ha usado en un rato, la primera carga tarda cerca de un minuto.
 
-![Vender desde el mostrador](docs/capturas/01-vender.jpg)
+![Vender desde el mostrador](docs/capturas/01-vender.png)
 
 | Caja del día | Fiados de un cliente | En el celular |
 |---|---|---|
-| ![Caja](docs/capturas/02-caja.jpg) | ![Fiados](docs/capturas/03-fiados.jpg) | ![Celular](docs/capturas/04-celular.png) |
+| ![Caja](docs/capturas/02-caja.png) | ![Fiados](docs/capturas/03-fiados.png) | ![Celular](docs/capturas/04-celular.png) |
 
 El diseño completo (historias de usuario, reglas de negocio y modelo de datos) está en [`docs/01-diseno.md`](docs/01-diseno.md).
 
@@ -24,6 +24,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **La deuda no se guarda: se calcula** (fiados − abonos) con subconsultas en SQL, así nunca queda desincronizada.
 - **Dinero en pesos enteros** (`integer`), nunca `float`; el detalle de cada venta guarda el precio y el costo del momento, y "hoy" se calcula en hora de Colombia.
 - **Roles.** La dueña maneja precios, cupos y la caja; el cajero vende y recibe abonos. Una guarda global de NestJS exige el token en todas las rutas y revisa el rol con `@Roles('DUENO')`.
+- **Una interfaz con identidad propia.** Se inspira en el cuaderno real de la tienda: papel con renglones, tinta azul, resaltador amarillo, productos como etiquetas de precio y la venta como la tirilla de una caja registradora. Los colores viven como variables en [`estilos.css`](apps/web/src/estilos.css).
 
 ## Stack
 

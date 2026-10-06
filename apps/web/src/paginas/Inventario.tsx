@@ -58,7 +58,7 @@ export function Inventario() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-lg font-bold ${p.bajoStock ? 'text-red-600' : 'text-stone-900'}`}>{p.stock}</p>
+                  <p className={`font-mono text-lg font-bold ${p.bajoStock ? 'text-margen' : 'text-stone-900'}`}>{p.stock}</p>
                   <p className="text-xs text-stone-400">mín. {p.stockMinimo}</p>
                 </div>
                 {esDueno && (

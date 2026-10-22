@@ -97,3 +97,7 @@ Levantan la aplicación completa y hablan con un PostgreSQL real: autenticación
 ---
 
 Proyecto de portafolio de **Manuela Córdoba Robledo**, aprendiz de Análisis y Desarrollo de Software (SENA). · [Portafolio](https://manuela-cordoba.vercel.app) · [LinkedIn](https://www.linkedin.com/in/manuela-cordoba-dev/)
+
+## Uso de inteligencia artificial
+
+Este proyecto se desarrolló con apoyo de herramientas de IA (Claude Code). El diseño, las decisiones, la revisión del código y las pruebas son míos, y puedo explicar cada parte.

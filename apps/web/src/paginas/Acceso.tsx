@@ -1,6 +1,6 @@
 import { loginSchema } from '@elcuaderno/shared';
-import { LogIn, Store, UserRound } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { Coffee, LogIn, Store, UserRound } from 'lucide-react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ErrorApi } from '../api/cliente';
 import { Logo } from '../componentes/Marco';
 import { Aviso, Boton, Campo } from '../componentes/ui';
@@ -9,6 +9,10 @@ import { useSesion } from '../sesion';
 const MODO_DEMO = import.meta.env.VITE_MODO_DEMO === 'true';
 const DEMO = { dueno: 'rosa@elcuaderno.co', cajero: 'cajero@elcuaderno.co', clave: 'Demo2026!' };
 
+// El plan gratuito del hosting apaga la API tras un rato sin uso y tarda cerca
+// de un minuto en encender: si la respuesta se demora, se explica por qué.
+const MS_ANTES_DE_AVISAR = 4000;
+
 export function Acceso() {
   const { entrar } = useSesion();
   const [email, setEmail] = useState('');
@@ -16,6 +20,16 @@ export function Acceso() {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [despertando, setDespertando] = useState(false);
+
+  useEffect(() => {
+    if (!enviando) return undefined;
+    const temporizador = setTimeout(() => setDespertando(true), MS_ANTES_DE_AVISAR);
+    return () => {
+      clearTimeout(temporizador);
+      setDespertando(false);
+    };
+  }, [enviando]);
 
   async function ingresar(datos: { email: string; password: string }) {
     // Mismo esquema Zod que usa la API: el error aparece antes de enviar.
@@ -59,6 +73,12 @@ export function Acceso() {
               onChange={(e) => setPassword(e.target.value)}
               error={errores.password}
             />
+            {despertando && (
+              <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm text-stone-800">
+                <Coffee size={16} className="mt-0.5 shrink-0" aria-hidden />
+                El servidor estaba en reposo y está encendiendo. La primera entrada puede tardar hasta un minuto.
+              </p>
+            )}
             {error && <Aviso>{error}</Aviso>}
             <Boton type="submit" disabled={enviando} className="w-full">
               <LogIn size={18} /> {enviando ? 'Entrando…' : 'Entrar'}

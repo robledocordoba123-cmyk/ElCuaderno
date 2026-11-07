@@ -52,6 +52,11 @@ export const clientes = pgTable(
     nombre: text('nombre').notNull(),
     telefono: text('telefono'),
     cupo: integer('cupo').notNull().default(0),
+    // Ley 1581 de 2012: el vecino autoriza que la tienda guarde su nombre, teléfono y fiados.
+    autorizaDatos: boolean('autoriza_datos').notNull().default(false),
+    autorizadoEn: timestamp('autorizado_en', { withTimezone: true }),
+    // Supresión: se borran sus datos personales y se conserva el historial sin nombre.
+    suprimidoEn: timestamp('suprimido_en', { withTimezone: true }),
   },
   (t) => [check('clientes_cupo_valido', sql`${t.cupo} >= 0`), index('clientes_tienda_idx').on(t.tiendaId)],
 );
@@ -98,4 +103,23 @@ export const abonos = pgTable(
     creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check('abonos_monto_positivo', sql`${t.monto} > 0`), index('abonos_cliente_idx').on(t.clienteId)],
+);
+
+/**
+ * Bitácora: quién hizo cada cambio y cuándo. Sin llaves foráneas a propósito: el registro
+ * sobrevive aunque se borre el usuario, por eso guarda también su nombre. Un trigger de la
+ * migración 0001 impide editar o borrar filas (solo la recarga de la demo puede vaciarla).
+ */
+export const bitacora = pgTable(
+  'bitacora',
+  {
+    id: serial('id').primaryKey(),
+    tiendaId: integer('tienda_id').notNull(),
+    usuarioId: integer('usuario_id'),
+    usuarioNombre: text('usuario_nombre').notNull(),
+    accion: text('accion').notNull(),
+    detalle: text('detalle'),
+    creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('bitacora_tienda_fecha_idx').on(t.tiendaId, t.creadoEn)],
 );

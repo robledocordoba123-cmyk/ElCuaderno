@@ -1,6 +1,7 @@
 import { loginSchema } from '@elcuaderno/shared';
 import { Coffee, LogIn, Store, UserRound } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { ErrorApi } from '../api/cliente';
 import { Logo } from '../componentes/Marco';
 import { Aviso, Boton, Campo } from '../componentes/ui';
@@ -99,6 +100,11 @@ export function Acceso() {
               </div>
             </div>
           )}
+          <p className="mt-6 text-xs text-stone-500">
+            <Link to="/privacidad" className="underline hover:text-stone-900">
+              Política de tratamiento de datos
+            </Link>
+          </p>
         </div>
       </div>
 

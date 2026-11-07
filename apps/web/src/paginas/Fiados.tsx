@@ -1,8 +1,9 @@
 // Fiados: quién debe, cuánto, su historial y el registro de abonos.
 import { abonoSchema, clienteSchema, formatearPesos, type Cliente } from '@elcuaderno/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, Phone, UserPlus } from 'lucide-react';
+import { ChevronRight, Phone, ShieldCheck, UserPlus, UserX } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { api, ErrorApi } from '../api/cliente';
 import { Aviso, Boton, Campo, Cargando, Encabezado, Modal, Tarjeta } from '../componentes/ui';
 import { useSesion } from '../sesion';
@@ -91,6 +92,18 @@ export function Fiados() {
 
 function DetalleCliente({ id, alCerrar }: { id: number; alCerrar: () => void }) {
   const queryClient = useQueryClient();
+  const { esDueno } = useSesion();
+  const [confirmarBorrado, setConfirmarBorrado] = useState(false);
+
+  // Ley 1581: el vecino puede pedir que borren sus datos. La API lo impide si todavía debe.
+  const suprimir = useMutation({
+    mutationFn: () => api(`/clientes/${id}/suprimir`, { metodo: 'POST' }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      alCerrar();
+    },
+    onError: (e) => setError(e instanceof ErrorApi ? e.message : 'No se pudieron borrar los datos'),
+  });
   const detalle = useQuery({ queryKey: ['clientes', id], queryFn: () => api<Detalle>(`/clientes/${id}`) });
   const [monto, setMonto] = useState('');
   const [error, setError] = useState('');
@@ -169,6 +182,30 @@ function DetalleCliente({ id, alCerrar }: { id: number; alCerrar: () => void }) 
               {c.movimientos.length === 0 && <li className="py-4 text-center text-sm text-stone-400">Sin movimientos todavía.</li>}
             </ul>
           </div>
+
+          {esDueno && c.deuda === 0 && (
+            <div className="border-t border-dashed border-stone-300 pt-3">
+              {confirmarBorrado ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-stone-700">
+                    Se borran su nombre y su celular. Sus compras pasadas quedan en la caja, sin datos personales. No se puede deshacer.
+                  </p>
+                  <div className="flex gap-2">
+                    <Boton variante="peligro" disabled={suprimir.isPending} onClick={() => suprimir.mutate()}>
+                      Sí, borrar sus datos
+                    </Boton>
+                    <Boton variante="fantasma" onClick={() => setConfirmarBorrado(false)}>
+                      Cancelar
+                    </Boton>
+                  </div>
+                </div>
+              ) : (
+                <Boton variante="fantasma" onClick={() => setConfirmarBorrado(true)}>
+                  <UserX size={16} /> El vecino pidió borrar sus datos
+                </Boton>
+              )}
+            </div>
+          )}
         </div>
       )}
     </Modal>
@@ -177,7 +214,7 @@ function DetalleCliente({ id, alCerrar }: { id: number; alCerrar: () => void }) 
 
 function NuevoCliente({ alCerrar }: { alCerrar: () => void }) {
   const queryClient = useQueryClient();
-  const [valores, setValores] = useState({ nombre: '', telefono: '', cupo: '' });
+  const [valores, setValores] = useState({ nombre: '', telefono: '', cupo: '', autorizaDatos: false });
   const [errores, setErrores] = useState<Record<string, string>>({});
   const crear = useMutation({
     mutationFn: (datos: unknown) => api<Cliente>('/clientes', { metodo: 'POST', cuerpo: datos }),
@@ -204,6 +241,23 @@ function NuevoCliente({ alCerrar }: { alCerrar: () => void }) {
         <Campo etiqueta="Nombre" value={valores.nombre} onChange={(e) => setValores({ ...valores, nombre: e.target.value })} error={errores.nombre} />
         <Campo etiqueta="Celular (opcional)" inputMode="tel" value={valores.telefono} onChange={(e) => setValores({ ...valores, telefono: e.target.value })} error={errores.telefono} />
         <Campo etiqueta="Cupo de fiado" type="number" inputMode="numeric" value={valores.cupo} onChange={(e) => setValores({ ...valores, cupo: e.target.value })} error={errores.cupo} />
+        <label className="flex items-start gap-2 rounded-lg border-2 border-dashed border-stone-300 bg-amber-50 p-3 text-sm text-stone-700">
+          <input
+            type="checkbox"
+            checked={valores.autorizaDatos}
+            onChange={(e) => setValores({ ...valores, autorizaDatos: e.target.checked })}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-stone-900"
+          />
+          <span>
+            <ShieldCheck size={14} className="mr-1 inline" aria-hidden />
+            El vecino autorizó que la tienda guarde su nombre, su celular y lo que fía, según la{' '}
+            <Link to="/privacidad" target="_blank" className="font-semibold underline">
+              política de datos
+            </Link>
+            .
+          </span>
+        </label>
+        {errores.autorizaDatos && <span className="block text-xs font-medium text-margen">{errores.autorizaDatos}</span>}
         {errores.general && <Aviso>{errores.general}</Aviso>}
         <Boton type="submit" disabled={crear.isPending} className="w-full">
           Guardar cliente

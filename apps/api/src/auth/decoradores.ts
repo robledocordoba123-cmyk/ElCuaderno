@@ -6,6 +6,7 @@ export interface UsuarioToken {
   tiendaId: number;
   nombre: string;
   rol: Rol;
+  tienda: string;
 }
 
 export const ES_PUBLICO = 'es-publico';

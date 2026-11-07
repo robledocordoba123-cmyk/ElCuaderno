@@ -5,9 +5,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Marco } from './componentes/Marco';
 import './estilos.css';
 import { Acceso } from './paginas/Acceso';
+import { Bitacora } from './paginas/Bitacora';
 import { Caja } from './paginas/Caja';
 import { Fiados } from './paginas/Fiados';
 import { Inventario } from './paginas/Inventario';
+import { Privacidad } from './paginas/Privacidad';
 import { Vender } from './paginas/Vender';
 import { ProveedorSesion, useSesion } from './sesion';
 
@@ -17,16 +19,22 @@ const queryClient = new QueryClient({
 
 function Rutas() {
   const { sesion, esDueno } = useSesion();
-  if (!sesion) return <Acceso />;
   return (
     <Routes>
-      <Route element={<Marco />}>
-        <Route index element={<Vender />} />
-        <Route path="inventario" element={<Inventario />} />
-        <Route path="fiados" element={<Fiados />} />
-        {esDueno && <Route path="caja" element={<Caja />} />}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
+      {/* La política de datos se puede leer sin iniciar sesión. */}
+      <Route path="privacidad" element={<Privacidad />} />
+      {!sesion ? (
+        <Route path="*" element={<Acceso />} />
+      ) : (
+        <Route element={<Marco />}>
+          <Route index element={<Vender />} />
+          <Route path="inventario" element={<Inventario />} />
+          <Route path="fiados" element={<Fiados />} />
+          {esDueno && <Route path="caja" element={<Caja />} />}
+          {esDueno && <Route path="bitacora" element={<Bitacora />} />}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      )}
     </Routes>
   );
 }

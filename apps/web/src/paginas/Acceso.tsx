@@ -1,14 +1,17 @@
 import { loginSchema } from '@elcuaderno/shared';
 import { Coffee, LogIn, Store, UserRound } from 'lucide-react';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type FormEvent, type InputHTMLAttributes } from 'react';
 import { Link } from 'react-router';
 import { ErrorApi } from '../api/cliente';
 import { Logo } from '../componentes/Marco';
-import { Aviso, Boton, Campo } from '../componentes/ui';
+import { Aviso, Boton } from '../componentes/ui';
 import { useSesion } from '../sesion';
 
 const MODO_DEMO = import.meta.env.VITE_MODO_DEMO === 'true';
 const DEMO = { dueno: 'rosa@elcuaderno.co', cajero: 'cajero@elcuaderno.co', clave: 'Demo2026!' };
+
+// El acceso es una hoja del cuaderno: espiral arriba, margen rojo, renglones y letra a mano.
+// Las cuentas de demostración son dos notas adhesivas pegadas a la hoja.
 
 // El plan gratuito del hosting apaga la API tras un rato sin uso y tarda cerca
 // de un minuto en encender: si la respuesta se demora, se explica por qué.
@@ -56,17 +59,31 @@ export function Acceso() {
     void ingresar({ email, password });
   };
 
-  return (
-    <div className="grid min-h-dvh md:grid-cols-2">
-      <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
-        <div className="mx-auto w-full max-w-sm">
-          <Logo />
-          <h1 className="mt-10 text-4xl font-extrabold tracking-tight text-stone-900">Abre tu cuaderno</h1>
-          <p className="mt-1 text-stone-500">Ventas, inventario y fiados de la tienda, desde el celular.</p>
 
-          <form onSubmit={alEnviar} className="mt-8 space-y-4" noValidate>
-            <Campo etiqueta="Correo" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errores.email} />
-            <Campo
+  return (
+    <div className="flex min-h-dvh items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Espiral: los aros pasan por encima del borde de la hoja. */}
+        <div className="relative z-10 flex justify-around px-8" aria-hidden>
+          {Array.from({ length: 9 }, (_, i) => (
+            <span key={i} className="h-7 w-3 translate-y-3 rounded-full border-[3px] border-stone-900 bg-stone-100" />
+          ))}
+        </div>
+
+        <main className="hoja relative overflow-hidden rounded-md border-2 border-stone-900 bg-stone-50 pb-8 pl-14 pr-6 pt-10 shadow-[6px_6px_0_0_var(--color-stone-900)] sm:pl-16 sm:pr-10">
+          <span className="absolute inset-y-0 left-10 w-px bg-margen sm:left-12" aria-hidden />
+
+          <div className="flex items-start justify-between gap-3">
+            <Logo />
+            <p className="hidden -rotate-3 font-mano text-xl leading-none text-stone-500 sm:block">“Anótemelo, vecina”</p>
+          </div>
+
+          <h1 className="mt-8 font-mano text-5xl font-bold leading-none text-stone-900">Abre tu cuaderno</h1>
+          <p className="mt-2 text-sm text-stone-600">Ventas, inventario y fiados de la tienda, desde el celular.</p>
+
+          <form onSubmit={alEnviar} className="mt-6 space-y-5" noValidate>
+            <Renglon etiqueta="Correo" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} error={errores.email} />
+            <Renglon
               etiqueta="Contraseña"
               type="password"
               autoComplete="current-password"
@@ -75,61 +92,76 @@ export function Acceso() {
               error={errores.password}
             />
             {despertando && (
-              <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm text-stone-800">
+              <p className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-100 px-3 py-2 text-sm text-stone-800">
                 <Coffee size={16} className="mt-0.5 shrink-0" aria-hidden />
                 El servidor estaba en reposo y está encendiendo. La primera entrada puede tardar hasta un minuto.
               </p>
             )}
             {error && <Aviso>{error}</Aviso>}
             <Boton type="submit" disabled={enviando} className="w-full">
-              <LogIn size={18} /> {enviando ? 'Entrando…' : 'Entrar'}
+              <LogIn size={18} /> {enviando ? 'Abriendo…' : 'Entrar'}
             </Boton>
           </form>
 
-          {MODO_DEMO && (
-            <div className="mt-8 rounded-lg border-2 border-dashed border-stone-400 bg-amber-100 p-4">
-              <p className="text-sm font-bold text-stone-900">¿Solo quieres probarla?</p>
-              <p className="mb-3 text-xs text-stone-600">Entra a la Tienda Doña Rosa con una semana de ventas de ejemplo.</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Boton variante="secundario" disabled={enviando} onClick={() => void ingresar({ email: DEMO.dueno, password: DEMO.clave })}>
-                  <Store size={16} /> Como dueña
-                </Boton>
-                <Boton variante="secundario" disabled={enviando} onClick={() => void ingresar({ email: DEMO.cajero, password: DEMO.clave })}>
-                  <UserRound size={16} /> Como cajero
-                </Boton>
-              </div>
-            </div>
-          )}
           <p className="mt-6 text-xs text-stone-500">
             <Link to="/privacidad" className="underline hover:text-stone-900">
               Política de tratamiento de datos
             </Link>
           </p>
-        </div>
-      </div>
+        </main>
 
-      {/* Portada del cuaderno: tapa de tinta, lomo amarillo, resorte y etiqueta. */}
-      <div className="relative hidden overflow-hidden bg-stone-900 md:block">
-        <div className="absolute inset-y-0 left-0 w-10 bg-amber-400" />
-        <div className="absolute inset-y-0 left-10 flex w-6 flex-col justify-around py-6" aria-hidden>
-          {Array.from({ length: 14 }, (_, i) => (
-            <span key={i} className="h-2.5 w-6 rounded-full border-2 border-stone-400 bg-stone-950" />
-          ))}
-        </div>
-        <div className="absolute inset-y-0 right-20 w-3 bg-stone-950/60" aria-hidden />
-        <div className="relative flex h-full items-center justify-center p-16 pl-24">
-          <div className="w-full max-w-md -rotate-2 rounded-md border-2 border-stone-900 bg-stone-50 p-8 shadow-[6px_6px_0_0_var(--color-amber-400)]">
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-stone-500">Tienda de barrio · 2026</p>
-            <div className="my-4 border-t-2 border-dashed border-stone-300" />
-            <p className="text-3xl font-extrabold leading-tight text-stone-900">
-              “Anótemelo en el <span className="bg-amber-300 px-1">cuaderno</span>, vecina.”
-            </p>
-            <p className="mt-4 text-stone-600">
-              Ahora el cuaderno sabe cuánto debe cada quien, qué se está acabando y cuánto se ganó hoy.
-            </p>
-          </div>
-        </div>
+        {MODO_DEMO && (
+          <section className="mt-6 px-2" aria-label="Cuentas de demostración">
+            <p className="font-mano text-2xl leading-none text-stone-700">¿Solo quieres probarla?</p>
+            <p className="mb-3 mt-1 text-xs text-stone-500">Entra a la Tienda Doña Rosa, con una semana de ventas de ejemplo.</p>
+            <div className="grid grid-cols-2 gap-4">
+              <NotaAdhesiva color="bg-amber-200" giro="-rotate-2" disabled={enviando} onClick={() => void ingresar({ email: DEMO.dueno, password: DEMO.clave })}>
+                <Store size={18} /> Como dueña
+              </NotaAdhesiva>
+              <NotaAdhesiva color="bg-[#fbd9cf]" giro="rotate-2" disabled={enviando} onClick={() => void ingresar({ email: DEMO.cajero, password: DEMO.clave })}>
+                <UserRound size={18} /> Como cajero
+              </NotaAdhesiva>
+            </div>
+          </section>
+        )}
       </div>
     </div>
+  );
+}
+
+/** Campo escrito sobre el renglón: sin caja, solo la línea, como en el papel. */
+function Renglon({ etiqueta, error, ...props }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; error?: string }) {
+  return (
+    <label className="block">
+      <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">{etiqueta}</span>
+      <input
+        {...props}
+        aria-invalid={Boolean(error)}
+        className={`w-full border-0 border-b-2 bg-transparent px-0 py-1.5 text-lg text-stone-900 outline-none transition focus:border-stone-900 ${
+          error ? 'border-margen' : 'border-stone-300'
+        }`}
+      />
+      {error && <span className="mt-1 block text-xs font-medium text-margen">{error}</span>}
+    </label>
+  );
+}
+
+/** Botón con forma de nota adhesiva pegada al cuaderno. */
+function NotaAdhesiva({
+  color,
+  giro,
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { color: string; giro: string }) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={`${color} ${giro} relative flex min-h-20 flex-col items-start justify-end gap-1 px-4 pb-3 pt-6 text-left text-sm font-bold text-stone-900 shadow-[2px_4px_0_0_rgb(27_35_64/0.18)] transition hover:rotate-0 hover:-translate-y-0.5 disabled:opacity-50`}
+    >
+      {/* Cinta que la pega a la hoja */}
+      <span className="absolute -top-2 left-1/2 h-4 w-12 -translate-x-1/2 rotate-2 bg-stone-50/70" aria-hidden />
+      {children}
+    </button>
   );
 }

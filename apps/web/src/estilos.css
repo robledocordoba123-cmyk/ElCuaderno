@@ -2,11 +2,15 @@
 
 /*
   Identidad visual: el cuaderno de la tienda.
-  Papel crema con renglones, tinta azul oscura, resaltador amarillo y precios en letra de caja registradora.
+  Papel crema con renglones, tinta azul oscura, resaltador amarillo, letra a mano para lo que se anota
+  y precios en letra de caja registradora.
   La paleta "stone" se reemplaza por tonos de papel y tinta, y "amber" por el amarillo del resaltador.
 */
 @theme {
-  --font-sans: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  /* Lexend se diseñó para leer con facilidad: la usan personas de todas las edades en el mostrador. */
+  --font-sans: 'Lexend', ui-sans-serif, system-ui, sans-serif;
+  /* Letra a mano, solo para lo que se anota en el cuaderno (títulos del acceso, notas). */
+  --font-mano: 'Caveat', 'Segoe Print', cursive;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --color-stone-50: #fdfaf2;
@@ -62,4 +66,10 @@ body {
   mask:
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / var(--diente) 51% repeat-x,
     linear-gradient(#000 0 0) top / 100% calc(100% - var(--diente) / 2 + 1px) no-repeat;
+}
+
+/* Hoja suelta del cuaderno (acceso): renglones azules sobre el papel. */
+.hoja {
+  background-image: repeating-linear-gradient(transparent 0 31px, rgb(27 35 64 / 0.09) 31px 32px);
+  background-position: 0 14px;
 }

@@ -80,8 +80,9 @@ export function Caja() {
             <Dato icono={HandCoins} titulo="Abonos recibidos" valor={r.abonos} />
           </div>
 
+          {/* min-w-0: sin esto, el texto largo de una venta estira la columna y desborda la página en el celular. */}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <section>
+            <section className="min-w-0">
               <h2 className="mb-2 font-bold text-stone-900">Lo más vendido</h2>
               <Tarjeta>
                 {r.masVendidos.length === 0 ? (
@@ -100,18 +101,18 @@ export function Caja() {
               </Tarjeta>
             </section>
 
-            <section>
+            <section className="min-w-0">
               <h2 className="mb-2 font-bold text-stone-900">Ventas</h2>
               <Tarjeta className="p-0!">
                 <ul className="max-h-96 divide-y divide-stone-100 overflow-y-auto">
                   {(ventas.data ?? []).map((v) => (
                     <li key={v.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                       <span className="w-20 shrink-0 whitespace-nowrap text-stone-400">{hora(v.creadaEn)}</span>
-                      <span className="flex-1 truncate text-stone-700">{v.items.map((i) => `${i.cantidad} ${i.producto}`).join(', ')}</span>
-                      <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${etiquetaMedio[v.medio]}`}>
+                      <span className="min-w-0 flex-1 truncate text-stone-700">{v.items.map((i) => `${i.cantidad} ${i.producto}`).join(', ')}</span>
+                      <span className={`shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${etiquetaMedio[v.medio]}`}>
                         {v.medio === 'FIADO' ? `Fiado · ${v.cliente}` : v.medio === 'NEQUI' ? 'Nequi' : 'Efectivo'}
                       </span>
-                      <span className="w-20 text-right font-semibold text-stone-900">{formatearPesos(v.total)}</span>
+                      <span className="w-20 shrink-0 text-right font-semibold text-stone-900">{formatearPesos(v.total)}</span>
                     </li>
                   ))}
                   {ventas.data?.length === 0 && <li className="px-4 py-6 text-center text-sm text-stone-400">Sin ventas este día.</li>}

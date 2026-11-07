@@ -14,6 +14,9 @@ export const config = {
   // Secreto solo para desarrollo: nunca se usa en producción porque ahí es obligatorio.
   jwtSecret: requerida('JWT_SECRET', 'secreto-de-desarrollo-no-usar-en-produccion-0123456789'),
   jwtDuracion: '8h' as const,
+  // La sesión va en una cookie httpOnly. En producción solo viaja por HTTPS.
+  cookieSesion: 'elcuaderno_sesion',
+  cookieSegura: produccion,
   corsOrigen: (process.env.CORS_ORIGIN ?? 'http://localhost:5174').split(',').map((o) => o.trim()).filter(Boolean),
   zonaHoraria: process.env.ZONA_HORARIA ?? 'America/Bogota',
 };

@@ -9,6 +9,7 @@ import { BaseDeDatos, DB } from '../src/db/db.module';
 import { clientes, productos, tiendas, usuarios } from '../src/db/esquema';
 import { migrar } from '../src/db/migrar';
 import { configurar } from '../src/main';
+import { IntentosLogin } from '../src/auth/intentos';
 
 const HASH = hashSync('Clave123!', 4); // Costo bajo: en pruebas importa la velocidad, no la seguridad.
 
@@ -28,20 +29,21 @@ export async function crearApp(): Promise<Contexto> {
 
 export async function limpiar(db: BaseDeDatos) {
   await db.execute(
-    sql`TRUNCATE detalles_venta, ventas, abonos, clientes, productos, usuarios, tiendas RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE bitacora, detalles_venta, ventas, abonos, clientes, productos, usuarios, tiendas RESTART IDENTITY CASCADE`,
   );
 }
 
 /** Crea una tienda con un dueño y un cajero, y devuelve sus tokens. */
 export async function crearTienda(ctx: Contexto, nombre = 'Tienda de prueba') {
+  // Los ids se reinician en cada prueba y los correos se repiten: se olvidan los intentos fallidos.
+  ctx.app.get(IntentosLogin).reiniciar();
   const [tienda] = await ctx.db.insert(tiendas).values({ nombre }).returning();
   const sufijo = `${tienda.id}@prueba.co`;
   await ctx.db.insert(usuarios).values([
     { tiendaId: tienda.id, nombre: 'Dueña', email: `dueno${sufijo}`, passwordHash: HASH, rol: 'DUENO' },
     { tiendaId: tienda.id, nombre: 'Cajero', email: `cajero${sufijo}`, passwordHash: HASH, rol: 'CAJERO' },
   ]);
-  const login = async (email: string) =>
-    (await ctx.http().post('/api/auth/login').send({ email, password: 'Clave123!' }).expect(200)).body.token as string;
+  const login = async (email: string) => tokenDeCookie(await ctx.http().post('/api/auth/login').send({ email, password: 'Clave123!' }).expect(200));
   return { id: tienda.id, dueno: await login(`dueno${sufijo}`), cajero: await login(`cajero${sufijo}`) };
 }
 
@@ -63,3 +65,13 @@ export async function crearCliente(ctx: Contexto, tiendaId: number, cupo = 50000
 }
 
 export const conToken = (token: string) => ({ Authorization: `Bearer ${token}` });
+
+/** El token ya no va en el cuerpo: se saca de la cookie httpOnly que manda el login. */
+export function tokenDeCookie(res: { headers: Record<string, unknown> }): string {
+  const cookies = ([] as string[]).concat((res.headers['set-cookie'] as string[] | string | undefined) ?? []);
+  const sesion = cookies.find((c) => c.startsWith('elcuaderno_sesion='));
+  if (!sesion) throw new Error('El login no devolvió la cookie de sesión');
+  return sesion.split(';')[0].split('=')[1];
+}
+
+export const conCookie = (token: string) => ({ Cookie: `elcuaderno_sesion=${token}` });

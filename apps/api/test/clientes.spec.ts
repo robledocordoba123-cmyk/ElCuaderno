@@ -81,10 +81,10 @@ describe('Clientes y abonos', () => {
   });
 
   it('solo el dueño crea clientes y define el cupo', async () => {
-    const datos = { nombre: 'Nueva vecina', telefono: '3001234567', cupo: 40000 };
+    const datos = { nombre: 'Nueva vecina', telefono: '3001234567', cupo: 40000, autorizaDatos: true };
     await ctx.http().post('/api/clientes').set(conToken(tienda.cajero)).send(datos).expect(403);
     const res = await ctx.http().post('/api/clientes').set(conToken(tienda.dueno)).send(datos).expect(201);
-    expect(res.body).toMatchObject({ nombre: 'Nueva vecina', cupo: 40000, deuda: 0, disponible: 40000 });
+    expect(res.body).toMatchObject({ nombre: 'Nueva vecina', cupo: 40000, deuda: 0, disponible: 40000, autorizaDatos: true });
   });
 
   it('un cliente de otra tienda no existe para mí', async () => {

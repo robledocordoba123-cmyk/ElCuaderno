@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { abonoSchema, clienteSchema, type AbonoDto, type ClienteDto } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { ZodPipe } from '../comun/zod.pipe';
@@ -28,6 +28,13 @@ export class ClientesController {
   @Put(':id')
   actualizar(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(clienteSchema)) datos: ClienteDto) {
     return this.clientes.actualizar(u.tiendaId, id, datos);
+  }
+
+  @Roles('DUENO')
+  @Post(':id/suprimir')
+  @HttpCode(200)
+  suprimir(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+    return this.clientes.suprimir(u.tiendaId, id);
   }
 
   @Post(':id/abonos')

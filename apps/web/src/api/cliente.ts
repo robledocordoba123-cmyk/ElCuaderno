@@ -1,9 +1,20 @@
-// Cliente HTTP: agrega el token, convierte los errores de la API en mensajes claros
-// y cierra la sesión si el token venció.
+// Cliente HTTP: convierte los errores de la API en mensajes claros y cierra la sesión si venció.
+// El token viaja en una cookie httpOnly que pone la API: JavaScript nunca lo ve ni lo guarda.
 import type { Sesion } from '@elcuaderno/shared';
 
-const BASE = (import.meta.env.VITE_API_URL as string | undefined) || '/api';
-const CLAVE_SESION = 'elcuaderno.sesion';
+// Siempre el mismo origen: en Vercel, /api se reenvía a la API (vercel.json) y en desarrollo
+// lo hace el proxy de Vite. Así la cookie es del mismo sitio y puede ser SameSite=Strict.
+const BASE = '/api';
+// Solo se recuerda quién está (nombre, rol y tienda) para pintar la pantalla al abrir;
+// no es un secreto. La API confirma la sesión con /auth/yo.
+const CLAVE_SESION = 'elcuaderno.usuario';
+
+// Las versiones anteriores guardaban aquí el token; se borra para que no quede en el navegador.
+try {
+  localStorage.removeItem('elcuaderno.sesion');
+} catch {
+  /* Navegación privada. */
+}
 
 export class ErrorApi extends Error {
   constructor(
@@ -39,15 +50,12 @@ export const cuandoVenzaLaSesion = (fn: () => void) => {
 };
 
 export async function api<T>(ruta: string, opciones: { metodo?: string; cuerpo?: unknown } = {}): Promise<T> {
-  const token = sesionGuardada()?.token;
   let respuesta: Response;
   try {
     respuesta = await fetch(BASE + ruta, {
       method: opciones.metodo ?? 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
       body: opciones.cuerpo === undefined ? undefined : JSON.stringify(opciones.cuerpo),
     });
   } catch {
@@ -57,7 +65,7 @@ export async function api<T>(ruta: string, opciones: { metodo?: string; cuerpo?:
   const texto = await respuesta.text();
   const datos = texto ? JSON.parse(texto) : null;
   if (!respuesta.ok) {
-    if (respuesta.status === 401 && token) alVencer();
+    if (respuesta.status === 401 && sesionGuardada()) alVencer();
     const mensaje = Array.isArray(datos?.message) ? datos.message.join(', ') : datos?.message;
     throw new ErrorApi(respuesta.status, mensaje ?? 'Algo salió mal', datos?.errores ?? {});
   }

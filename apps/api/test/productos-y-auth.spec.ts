@@ -1,4 +1,4 @@
-import { conToken, Contexto, crearApp, crearProducto, crearTienda, limpiar } from './soporte';
+import { conCookie, conToken, Contexto, crearApp, crearProducto, crearTienda, limpiar, tokenDeCookie } from './soporte';
 
 describe('Autenticación', () => {
   let ctx: Contexto;
@@ -20,7 +20,16 @@ describe('Autenticación', () => {
       .send({ email: `  DUENO${tienda.id}@prueba.co `, password: 'Clave123!' })
       .expect(200);
     expect(res.body.usuario).toMatchObject({ rol: 'DUENO', tienda: 'Tienda Doña Rosa' });
-    expect(res.body.token).toEqual(expect.any(String));
+    // El token no viaja en el cuerpo (JavaScript no lo ve): va en una cookie httpOnly y strict.
+    expect(res.body.token).toBeUndefined();
+    const cookie = ([] as string[]).concat(res.headers['set-cookie'] ?? []).join(';');
+    expect(cookie).toMatch(/elcuaderno_sesion=/);
+    expect(cookie).toMatch(/HttpOnly/i);
+    expect(cookie).toMatch(/SameSite=Strict/i);
+    expect(cookie).toMatch(/Path=\/api/);
+
+    const yo = await ctx.http().get('/api/auth/yo').set(conCookie(tokenDeCookie(res))).expect(200);
+    expect(yo.body.usuario).toMatchObject({ rol: 'DUENO', tienda: 'Tienda Doña Rosa' });
   });
 
   it('responde igual si el correo no existe o si la clave es incorrecta', async () => {

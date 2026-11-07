@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AbonoDto, Cliente, ClienteDto } from '@elcuaderno/shared';
 import { NoEncontrado, ReglaDeNegocio } from '../comun/errores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
@@ -11,10 +11,12 @@ const columnas = {
   nombre: clientes.nombre,
   telefono: clientes.telefono,
   cupo: clientes.cupo,
+  autorizaDatos: clientes.autorizaDatos,
   deuda: deudaExpr,
 };
 
-const aRespuesta = (c: { id: number; nombre: string; telefono: string | null; cupo: number; deuda: number }): Cliente => ({
+type Fila = { id: number; nombre: string; telefono: string | null; cupo: number; autorizaDatos: boolean; deuda: number };
+const aRespuesta = (c: Fila): Cliente => ({
   ...c,
   deuda: Number(c.deuda),
   disponible: Math.max(c.cupo - Number(c.deuda), 0),
@@ -28,7 +30,13 @@ export class ClientesService {
     const filas = await this.db
       .select(columnas)
       .from(clientes)
-      .where(soloDeudores ? sql`${clientes.tiendaId} = ${tiendaId} and ${deudaExpr} > 0` : eq(clientes.tiendaId, tiendaId))
+      .where(
+        and(
+          eq(clientes.tiendaId, tiendaId),
+          isNull(clientes.suprimidoEn),
+          soloDeudores ? sql`${deudaExpr} > 0` : undefined,
+        ),
+      )
       .orderBy(soloDeudores ? desc(deudaExpr) : asc(clientes.nombre));
     return filas.map(aRespuesta);
   }
@@ -51,18 +59,52 @@ export class ClientesService {
   }
 
   async crear(tiendaId: number, datos: ClienteDto) {
-    const [fila] = await this.db.insert(clientes).values({ ...datos, tiendaId }).returning({ id: clientes.id });
+    const { autorizaDatos, ...resto } = datos;
+    const [fila] = await this.db
+      .insert(clientes)
+      .values({ ...resto, tiendaId, autorizaDatos, autorizadoEn: new Date() })
+      .returning({ id: clientes.id });
     return this.obtener(tiendaId, fila.id);
   }
 
   async actualizar(tiendaId: number, id: number, datos: ClienteDto) {
     const [fila] = await this.db
       .update(clientes)
-      .set({ nombre: datos.nombre, telefono: datos.telefono ?? null, cupo: datos.cupo })
-      .where(deLaTienda(id, tiendaId))
+      .set({
+        nombre: datos.nombre,
+        telefono: datos.telefono ?? null,
+        cupo: datos.cupo,
+        autorizaDatos: true,
+        // Si ya había autorizado se conserva la fecha original.
+        autorizadoEn: sql`coalesce(${clientes.autorizadoEn}, now())`,
+      })
+      .where(and(deLaTienda(id, tiendaId), isNull(clientes.suprimidoEn)))
       .returning({ id: clientes.id });
     if (!fila) throw new NoEncontrado('El cliente');
     return this.obtener(tiendaId, id);
+  }
+
+  /**
+   * Ley 1581: el vecino pide que borren sus datos. Solo se puede si no debe nada (la deuda
+   * es un registro que la tienda necesita). Se borran nombre y teléfono y se conserva el
+   * historial de ventas sin datos personales, porque cuadra la caja de días anteriores.
+   */
+  async suprimir(tiendaId: number, id: number) {
+    return this.db.transaction(async (tx) => {
+      const [cliente] = await tx
+        .select({ id: clientes.id })
+        .from(clientes)
+        .where(and(deLaTienda(id, tiendaId), isNull(clientes.suprimidoEn)))
+        .for('update');
+      if (!cliente) throw new NoEncontrado('El cliente');
+      const [{ deuda }] = await tx.select({ deuda: deudaExpr }).from(clientes).where(eq(clientes.id, id));
+      if (Number(deuda) > 0) throw new ReglaDeNegocio('No se pueden borrar sus datos mientras tenga deuda');
+      await tx
+        .update(clientes)
+        .set({ nombre: `Cliente retirado #${id}`, telefono: null, cupo: 0, autorizaDatos: false, suprimidoEn: new Date() })
+        .where(eq(clientes.id, id));
+      return { suprimido: true };
+    });
   }
 
   /**

@@ -24,6 +24,9 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **La deuda no se guarda: se calcula** (fiados − abonos) con subconsultas en SQL, así nunca queda desincronizada.
 - **Dinero en pesos enteros** (`integer`), nunca `float`; el detalle de cada venta guarda el precio y el costo del momento, y "hoy" se calcula en hora de Colombia.
 - **Roles.** La dueña maneja precios, cupos y la caja; el cajero vende y recibe abonos. Una guarda global de NestJS exige el token en todas las rutas y revisa el rol con `@Roles('DUENO')`.
+- **Seguridad.** La sesión viaja en una cookie `httpOnly` y `SameSite=Strict` (JavaScript nunca ve el token), porque la web llama a `/api` en su mismo dominio y Vercel la reenvía a Render. El login se bloquea tras 5 intentos fallidos por correo, la API manda cabeceras de seguridad con `helmet` y la web tiene CSP propia en [`vercel.json`](apps/web/vercel.json).
+- **Bitácora inmutable.** Cada cambio que sale bien (venta, abono, precio, cliente) queda anotado con quién y cuándo. Un trigger de PostgreSQL impide editar o borrar filas ([`0001_seguridad_y_datos.sql`](apps/api/drizzle/0001_seguridad_y_datos.sql)).
+- **Datos de los vecinos (Ley 1581 de 2012).** No se guarda un cliente sin su autorización, hay [política de datos](https://elcuaderno-demo.vercel.app/privacidad) y la dueña puede borrar los datos de quien ya no debe: se eliminan nombre y celular, y sus compras pasadas quedan en la caja sin datos personales.
 - **Una interfaz con identidad propia.** Se inspira en el cuaderno real de la tienda: papel con renglones, tinta azul, resaltador amarillo, productos como etiquetas de precio y la venta como la tirilla de una caja registradora. Los colores viven como variables en [`estilos.css`](apps/web/src/estilos.css).
 
 ## Stack
@@ -34,7 +37,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (27 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (39 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```
@@ -47,20 +50,23 @@ ElCuaderno/
 
 ## API
 
-Todas las rutas van bajo `/api` y exigen `Authorization: Bearer <token>`, salvo login y salud.
+Todas las rutas van bajo `/api` y exigen la cookie de sesión (o `Authorization: Bearer <token>` para scripts), salvo login, salir y salud.
 
 | Método | Ruta | Rol | Descripción |
 |---|---|---|---|
-| POST | `/auth/login` | Público | Inicia sesión y devuelve el token |
+| POST | `/auth/login` | Público | Inicia sesión y deja la cookie `httpOnly` (5 intentos fallidos por correo y se bloquea 15 min) |
+| GET / POST | `/auth/yo`, `/auth/salir` | Todos | Confirma la sesión / la cierra borrando la cookie |
 | GET | `/productos?q=&bajoStock=true` | Todos | Productos con alerta de stock bajo |
 | POST / PUT / DELETE | `/productos`, `/productos/:id` | Dueña | Crear, editar, desactivar |
 | PATCH | `/productos/:id/entrada` | Dueña | Suma mercancía que llegó |
 | GET | `/clientes?deudores=true`, `/clientes/:id` | Todos | Clientes con deuda, cupo disponible e historial |
 | POST / PUT | `/clientes`, `/clientes/:id` | Dueña | Crear clientes y definir su cupo |
 | POST | `/clientes/:id/abonos` | Todos | Registrar un abono |
+| POST | `/clientes/:id/suprimir` | Dueña | Borrar los datos de un vecino que no debe nada (Ley 1581) |
 | POST | `/ventas` | Todos | Venta en efectivo, Nequi o fiado |
 | GET | `/ventas?dia=AAAA-MM-DD` | Todos | Ventas de un día |
 | GET | `/caja/resumen?dia=AAAA-MM-DD` | Dueña | Cierre de caja: medios, abonos, ganancia, más vendidos |
+| GET | `/bitacora?pagina=1` | Dueña | Quién hizo cada cambio, de 50 en 50 |
 
 ## Cómo correrlo en local
 
@@ -84,7 +90,7 @@ docker exec elcuaderno_db psql -U elcuaderno -c "CREATE DATABASE elcuaderno_test
 npm test
 ```
 
-Levantan la aplicación completa y hablan con un PostgreSQL real: autenticación y roles, validaciones compartidas, ventas atómicas, concurrencia sobre la última unidad, cupo de fiado, abonos simultáneos, aislamiento entre tiendas y el cierre de caja en hora de Colombia.
+Levantan la aplicación completa y hablan con un PostgreSQL real: autenticación y roles, validaciones compartidas, ventas atómicas, concurrencia sobre la última unidad, cupo de fiado, abonos simultáneos, límite de intentos, cookie de sesión, bitácora inmutable, autorización y supresión de datos, aislamiento entre tiendas y el cierre de caja en hora de Colombia.
 
 ## Despliegue
 

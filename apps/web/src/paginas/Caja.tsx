@@ -1,8 +1,9 @@
 // Caja del día (solo la dueña): cuánto entró por cada medio, la ganancia y las ventas.
 import { formatearPesos, type ResumenCaja, type Venta } from '@elcuaderno/shared';
 import { useQuery } from '@tanstack/react-query';
-import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, Smartphone, TrendingUp, Wallet } from 'lucide-react';
+import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, ScrollText, Smartphone, TrendingUp, Wallet } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { api } from '../api/cliente';
 import { Cargando, Encabezado, Tarjeta } from '../componentes/ui';
 
@@ -30,7 +31,15 @@ export function Caja() {
 
   return (
     <>
-      <Encabezado titulo="Caja del día" detalle={nombreDia(dia)} />
+      <Encabezado
+        titulo="Caja del día"
+        detalle={nombreDia(dia)}
+        accion={
+          <Link to="/bitacora" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-200/60">
+            <ScrollText size={16} /> Bitácora
+          </Link>
+        }
+      />
       <div className="mb-5 flex items-center gap-2">
         <button onClick={() => setDia(moverDia(dia, -1))} className="rounded-lg border-2 border-stone-300 bg-stone-50 hover:border-stone-900 p-2" aria-label="Día anterior">
           <ChevronLeft size={18} />

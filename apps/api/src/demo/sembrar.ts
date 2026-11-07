@@ -1,12 +1,12 @@
 // Datos de demostración: "Tienda Doña Rosa" con productos, vecinos que fían y una semana de ventas.
 // Se puede ejecutar muchas veces: borra y recrea solo la tienda de demo.
 import { hashSync } from 'bcryptjs';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { config } from '../config';
 import * as esquema from '../db/esquema';
-import { abonos, clientes, detallesVenta, productos, tiendas, usuarios, ventas } from '../db/esquema';
+import { abonos, bitacora, clientes, detallesVenta, productos, tiendas, usuarios, ventas } from '../db/esquema';
 import { diaLocal, limitesDelDia } from '../tiempo';
 
 export const DEMO = {
@@ -68,6 +68,9 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
       await tx.delete(abonos).where(inArray(abonos.tiendaId, ids));
       await tx.delete(clientes).where(inArray(clientes.tiendaId, ids));
       await tx.delete(productos).where(inArray(productos.tiendaId, ids));
+      // La bitácora es inmutable; solo esta recarga, dentro de su transacción, puede vaciarla.
+      await tx.execute(sql`SELECT set_config('elcuaderno.recargar_demo', 'si', true)`);
+      await tx.delete(bitacora).where(inArray(bitacora.tiendaId, ids));
       await tx.delete(usuarios).where(inArray(usuarios.tiendaId, ids));
       await tx.delete(tiendas).where(inArray(tiendas.id, ids));
     }
@@ -89,7 +92,7 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
       .returning();
     const listaClientes = await tx
       .insert(clientes)
-      .values(CLIENTES.map((c) => ({ ...c, telefono: c.telefono || null, tiendaId: tienda.id })))
+      .values(CLIENTES.map((c) => ({ ...c, telefono: c.telefono || null, tiendaId: tienda.id, autorizaDatos: true, autorizadoEn: new Date() })))
       .returning();
 
     const deuda = new Map<number, number>(listaClientes.map((c) => [c.id, 0]));

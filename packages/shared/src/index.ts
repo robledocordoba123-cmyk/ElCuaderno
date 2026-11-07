@@ -52,6 +52,8 @@ export const clienteSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
   cupo: pesos,
+  // Ley 1581 de 2012: sin la autorización del vecino no se guardan sus datos.
+  autorizaDatos: z.boolean().refine((v) => v, 'El vecino debe autorizar que se guarden sus datos'),
 });
 export type ClienteDto = z.infer<typeof clienteSchema>;
 
@@ -96,6 +98,7 @@ export interface Cliente {
   cupo: number;
   deuda: number;
   disponible: number;
+  autorizaDatos: boolean;
 }
 export interface Venta {
   id: number;
@@ -114,9 +117,16 @@ export interface ResumenCaja {
   ganancia: number;
   masVendidos: { producto: string; unidades: number }[];
 }
+/** La sesión viaja en una cookie httpOnly: el navegador la guarda y JavaScript no puede leerla. */
 export interface Sesion {
-  token: string;
   usuario: { id: number; nombre: string; rol: Rol; tienda: string };
+}
+export interface RegistroBitacora {
+  id: number;
+  usuario: string;
+  accion: string;
+  detalle: string | null;
+  fecha: string;
 }
 
 /** Formatea pesos colombianos: 12500 → "$ 12.500". */

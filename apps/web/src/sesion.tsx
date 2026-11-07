@@ -16,13 +16,30 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   const [sesion, setSesion] = useState<Sesion | null>(sesionGuardada);
   const queryClient = useQueryClient();
 
-  const salir = useCallback(() => {
+  const olvidar = useCallback(() => {
     guardarSesion(null);
     setSesion(null);
     queryClient.clear();
   }, [queryClient]);
 
-  useEffect(() => cuandoVenzaLaSesion(salir), [salir]);
+  // Pide a la API que borre la cookie; aunque falle la red, en este navegador se cierra igual.
+  const salir = useCallback(() => {
+    void api('/auth/salir', { metodo: 'POST' }).catch(() => undefined);
+    olvidar();
+  }, [olvidar]);
+
+  useEffect(() => cuandoVenzaLaSesion(olvidar), [olvidar]);
+
+  // Al abrir, confirma con la API que la cookie sigue siendo válida (puede haber vencido).
+  useEffect(() => {
+    if (!sesionGuardada()) return;
+    api<Sesion>('/auth/yo')
+      .then((s) => {
+        guardarSesion(s);
+        setSesion(s);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const entrar = useCallback(async (datos: LoginDto) => {
     const nueva = await api<Sesion>('/auth/login', { metodo: 'POST', cuerpo: datos });

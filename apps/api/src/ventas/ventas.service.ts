@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
-import type { Venta, VentaDto } from '@elcuaderno/shared';
+import { alias } from 'drizzle-orm/pg-core';
+import type { AnulacionDto, Venta, VentaDto } from '@elcuaderno/shared';
 import { NoEncontrado, ReglaDeNegocio } from '../comun/errores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
-import { clientes, detallesVenta, productos, ventas } from '../db/esquema';
+import { clientes, detallesVenta, productos, usuarios, ventas } from '../db/esquema';
 import { deLaTienda, deudaExpr } from '../clientes/deuda';
 import { diaLocal, limitesDelDia } from '../tiempo';
 
@@ -91,6 +92,56 @@ export class VentasService {
     return venta;
   }
 
+  /**
+   * Anula una venta del día: devuelve las unidades al inventario y la saca de la caja y de
+   * la deuda. La venta no se borra; queda marcada con quién, cuándo y por qué.
+   * Solo ventas de hoy, para que el cierre de caja de días anteriores no cambie.
+   */
+  async anular(tiendaId: number, usuarioId: number, id: number, { motivo }: AnulacionDto): Promise<Venta> {
+    await this.db.transaction(async (tx) => {
+      // Bloquea la venta: dos anulaciones al mismo tiempo no devuelven el inventario dos veces.
+      const [venta] = await tx
+        .select()
+        .from(ventas)
+        .where(and(eq(ventas.id, id), eq(ventas.tiendaId, tiendaId)))
+        .for('update');
+      if (!venta) throw new NoEncontrado('La venta');
+      if (venta.anuladaEn) throw new ReglaDeNegocio('Esa venta ya estaba anulada');
+      if (diaLocal(venta.creadaEn) !== diaLocal()) {
+        throw new ReglaDeNegocio('Solo se pueden anular ventas de hoy: la caja de días anteriores ya se cerró');
+      }
+
+      if (venta.medio === 'FIADO' && venta.clienteId) {
+        // Si el vecino ya abonó más de lo que quedaría debiendo, la deuda quedaría negativa.
+        await tx.select({ id: clientes.id }).from(clientes).where(eq(clientes.id, venta.clienteId)).for('update');
+        const [{ deuda }] = await tx.select({ deuda: deudaExpr }).from(clientes).where(eq(clientes.id, venta.clienteId));
+        if (Number(deuda) - venta.total < 0) {
+          throw new ReglaDeNegocio(
+            `No se puede anular: el vecino ya abonó parte de este fiado y quedaría con saldo a favor de ${venta.total - Number(deuda)} pesos`,
+          );
+        }
+      }
+
+      const detalles = await tx
+        .select({ productoId: detallesVenta.productoId, cantidad: detallesVenta.cantidad })
+        .from(detallesVenta)
+        .where(eq(detallesVenta.ventaId, id))
+        .orderBy(asc(detallesVenta.productoId));
+      for (const d of detalles) {
+        await tx
+          .update(productos)
+          .set({ stock: sql`${productos.stock} + ${d.cantidad}` })
+          .where(eq(productos.id, d.productoId));
+      }
+      await tx
+        .update(ventas)
+        .set({ anuladaEn: new Date(), anuladaPor: usuarioId, motivoAnulacion: motivo })
+        .where(eq(ventas.id, id));
+    });
+    const [venta] = await this.listar(tiendaId, { id });
+    return venta;
+  }
+
   /** Ventas de un día (hora de Colombia), las más recientes primero. */
   async listar(tiendaId: number, filtro: { dia?: string; id?: number } = {}): Promise<Venta[]> {
     const condiciones = [eq(ventas.tiendaId, tiendaId)];
@@ -101,6 +152,7 @@ export class VentasService {
       condiciones.push(gte(ventas.creadaEn, desde), lt(ventas.creadaEn, hasta));
     }
 
+    const quienAnulo = alias(usuarios, 'quien_anulo');
     const cabeceras = await this.db
       .select({
         id: ventas.id,
@@ -108,9 +160,13 @@ export class VentasService {
         total: ventas.total,
         cliente: clientes.nombre,
         creadaEn: ventas.creadaEn,
+        anuladaEn: ventas.anuladaEn,
+        motivo: ventas.motivoAnulacion,
+        anuladaPor: quienAnulo.nombre,
       })
       .from(ventas)
       .leftJoin(clientes, eq(clientes.id, ventas.clienteId))
+      .leftJoin(quienAnulo, eq(quienAnulo.id, ventas.anuladaPor))
       .where(and(...condiciones))
       .orderBy(desc(ventas.creadaEn), desc(ventas.id));
     if (cabeceras.length === 0) return [];
@@ -132,9 +188,10 @@ export class VentasService {
       )
       .orderBy(asc(detallesVenta.id));
 
-    return cabeceras.map((c) => ({
+    return cabeceras.map(({ anuladaEn, motivo, anuladaPor, ...c }) => ({
       ...c,
       creadaEn: c.creadaEn.toISOString(),
+      anulada: anuladaEn ? { en: anuladaEn.toISOString(), por: anuladaPor ?? '', motivo: motivo ?? '' } : null,
       items: detalles
         .filter((d) => d.ventaId === c.id)
         .map((d) => ({ producto: d.producto, cantidad: d.cantidad, precioUnitario: d.precioUnitario })),

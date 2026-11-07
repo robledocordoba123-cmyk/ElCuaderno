@@ -71,9 +71,17 @@ export const ventas = pgTable(
     medio: medioEnum('medio').notNull(),
     total: integer('total').notNull(),
     creadaEn: timestamp('creada_en', { withTimezone: true }).notNull().defaultNow(),
+    // Anulación: la venta no se borra (la caja y la bitácora deben cuadrar); se marca.
+    anuladaEn: timestamp('anulada_en', { withTimezone: true }),
+    anuladaPor: integer('anulada_por').references(() => usuarios.id),
+    motivoAnulacion: text('motivo_anulacion'),
   },
   (t) => [
     check('ventas_fiado_con_cliente', sql`${t.medio} <> 'FIADO' OR ${t.clienteId} IS NOT NULL`),
+    check(
+      'ventas_anulacion_completa',
+      sql`(${t.anuladaEn} IS NULL) = (${t.anuladaPor} IS NULL) AND (${t.anuladaEn} IS NULL) = (${t.motivoAnulacion} IS NULL)`,
+    ),
     index('ventas_tienda_fecha_idx').on(t.tiendaId, t.creadaEn),
   ],
 );

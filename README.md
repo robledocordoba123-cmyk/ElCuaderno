@@ -22,6 +22,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **Sin sobreventa aunque dos cajeros vendan al mismo tiempo.** La venta descuenta el stock con `UPDATE ... WHERE stock >= cantidad` dentro de una transacción ([`ventas.service.ts`](apps/api/src/ventas/ventas.service.ts)). Si un producto no alcanza, la venta completa se cancela. Una prueba lanza 5 ventas simultáneas de la última unidad y verifica que solo una gana.
 - **El cupo de fiado no se puede pasar.** Antes de fiar se bloquea la fila del cliente (`SELECT ... FOR UPDATE`), así dos fiados o dos abonos al mismo tiempo no se saltan la validación. Otra prueba lo comprueba.
 - **Anular sin borrar.** Una venta equivocada no se borra: la dueña la anula con un motivo, las unidades vuelven al inventario y deja de contar en la caja y en la deuda. Solo ventas de hoy, para que no cambien cierres pasados, y no se anula un fiado que el vecino ya abonó.
+- **El cajón cuadra de verdad.** Lo que debe haber es base + ventas en efectivo + abonos − gastos (el pago al proveedor también sale del cajón). Al cerrar, la dueña escribe lo que contó y queda guardada la diferencia; después del cierre ya no se mueven la base, los gastos ni las anulaciones de ese día, y si entra otra venta la caja lo avisa.
 - **La deuda no se guarda: se calcula** (fiados − abonos) con subconsultas en SQL, así nunca queda desincronizada.
 - **Dinero en pesos enteros** (`integer`), nunca `float`; el detalle de cada venta guarda el precio y el costo del momento, y "hoy" se calcula en hora de Colombia.
 - **Roles.** La dueña maneja precios, cupos y la caja; el cajero vende y recibe abonos. Una guarda global de NestJS exige el token en todas las rutas y revisa el rol con `@Roles('DUENO')`.
@@ -38,7 +39,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (46 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (55 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```
@@ -67,7 +68,10 @@ Todas las rutas van bajo `/api` y exigen la cookie de sesión (o `Authorization:
 | POST | `/ventas` | Todos | Venta en efectivo, Nequi o fiado |
 | GET | `/ventas?dia=AAAA-MM-DD` | Todos | Ventas de un día (las anuladas vienen marcadas) |
 | POST | `/ventas/:id/anular` | Dueña | Anula una venta de hoy con motivo: devuelve las unidades y la saca de la caja y de la deuda |
-| GET | `/caja/resumen?dia=AAAA-MM-DD` | Dueña | Cierre de caja: medios, abonos, ganancia, más vendidos |
+| GET | `/caja/resumen?dia=AAAA-MM-DD` | Dueña | Caja del día: medios, abonos, base, gastos, lo que debe haber en el cajón, ganancia, más vendidos y cierre |
+| PUT | `/caja/base` | Dueña | Base con que se abre el cajón hoy |
+| POST / DELETE | `/caja/gastos`, `/caja/gastos/:id` | Todos / Dueña | Anotar un gasto que sale del cajón / quitar uno mal anotado |
+| POST | `/caja/cierre?dia=` | Dueña | Cierre con lo contado: guarda lo esperado y la diferencia; después no se mueve nada de ese día |
 | GET | `/bitacora?pagina=1` | Dueña | Quién hizo cada cambio, de 50 en 50 |
 
 ## Cómo correrlo en local

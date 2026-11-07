@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import type { AnulacionDto, Venta, VentaDto } from '@elcuaderno/shared';
+import { CajaService } from '../caja/caja.service';
 import { NoEncontrado, ReglaDeNegocio } from '../comun/errores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
 import { clientes, detallesVenta, productos, usuarios, ventas } from '../db/esquema';
@@ -10,7 +11,10 @@ import { diaLocal, limitesDelDia } from '../tiempo';
 
 @Injectable()
 export class VentasService {
-  constructor(@InjectDb() private readonly db: BaseDeDatos) {}
+  constructor(
+    @InjectDb() private readonly db: BaseDeDatos,
+    private readonly caja: CajaService,
+  ) {}
 
   /**
    * Registra una venta completa en una sola transacción (RN-03):
@@ -98,6 +102,8 @@ export class VentasService {
    * Solo ventas de hoy, para que el cierre de caja de días anteriores no cambie.
    */
   async anular(tiendaId: number, usuarioId: number, id: number, { motivo }: AnulacionDto): Promise<Venta> {
+    // Si la dueña ya cerró la caja de hoy, el cierre no debe cambiar por debajo.
+    await this.caja.exigirAbierto(tiendaId, diaLocal());
     await this.db.transaction(async (tx) => {
       // Bloquea la venta: dos anulaciones al mismo tiempo no devuelven el inventario dos veces.
       const [venta] = await tx

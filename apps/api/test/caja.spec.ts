@@ -35,6 +35,9 @@ describe('Caja del día', () => {
       ventas: 3,
       porMedio: { EFECTIVO: 10000, NEQUI: 10500, FIADO: 21000 },
       abonos: 5000,
+      // Sin base ni gastos ese día: el cajón es solo efectivo + abonos.
+      base: 0,
+      gastos: 0,
       enCaja: 15000,
       // (2500-1800)*4 + (10500-8700)*3
       ganancia: 2800 + 5400,
@@ -42,6 +45,8 @@ describe('Caja del día', () => {
         { producto: 'Gaseosa', unidades: 4 },
         { producto: 'Café', unidades: 3 },
       ],
+      listaGastos: [],
+      cierre: null,
     });
   });
 

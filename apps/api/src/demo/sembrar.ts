@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { config } from '../config';
 import * as esquema from '../db/esquema';
-import { abonos, bitacora, clientes, detallesVenta, productos, tiendas, usuarios, ventas } from '../db/esquema';
+import { abonos, bitacora, cierresCaja, clientes, detallesVenta, movimientosCaja, productos, tiendas, usuarios, ventas } from '../db/esquema';
 import { diaLocal, limitesDelDia } from '../tiempo';
 
 export const DEMO = {
@@ -71,6 +71,8 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
       // La bitácora es inmutable; solo esta recarga, dentro de su transacción, puede vaciarla.
       await tx.execute(sql`SELECT set_config('elcuaderno.recargar_demo', 'si', true)`);
       await tx.delete(bitacora).where(inArray(bitacora.tiendaId, ids));
+      await tx.delete(cierresCaja).where(inArray(cierresCaja.tiendaId, ids));
+      await tx.delete(movimientosCaja).where(inArray(movimientosCaja.tiendaId, ids));
       await tx.delete(usuarios).where(inArray(usuarios.tiendaId, ids));
       await tx.delete(tiendas).where(inArray(tiendas.id, ids));
     }
@@ -156,6 +158,20 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
         }
       }
     }
+
+    // Cajón: la tienda abre cada día con $ 50.000 de base, y hoy ya le pagó al de la gaseosa.
+    for (let diasAtras = 6; diasAtras >= 0; diasAtras--) {
+      const dia = diaLocal(new Date(ahora - diasAtras * DIA));
+      await tx.insert(movimientosCaja).values({ tiendaId: tienda.id, dia, tipo: 'BASE', monto: 50000, usuarioId: dueno.id });
+    }
+    await tx.insert(movimientosCaja).values({
+      tiendaId: tienda.id,
+      dia: diaLocal(new Date(ahora)),
+      tipo: 'GASTO',
+      monto: 42000,
+      descripcion: 'Pago al distribuidor de gaseosas',
+      usuarioId: cajero.id,
+    });
   });
 }
 

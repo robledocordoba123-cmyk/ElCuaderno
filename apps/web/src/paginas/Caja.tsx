@@ -5,6 +5,7 @@ import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, ScrollText, S
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { api, ErrorApi } from '../api/cliente';
+import { Cajon } from '../componentes/Cajon';
 import { Aviso, Boton, Campo, Cargando, Encabezado, Modal, Tarjeta } from '../componentes/ui';
 
 const hoyEnColombia = () =>
@@ -79,7 +80,7 @@ export function Caja() {
                 <Wallet size={16} /> Debe haber en el cajón
               </p>
               <p className="mt-1 font-mono text-3xl font-bold tracking-tight text-stone-950">{formatearPesos(r.enCaja)}</p>
-              <p className="text-xs text-amber-900">Ventas en efectivo + abonos</p>
+              <p className="text-xs text-amber-900">Base + efectivo + abonos − gastos</p>
             </Tarjeta>
             <Dato icono={TrendingUp} titulo="Ganancia" valor={r.ganancia} nota={`${r.ventas} ventas`} />
             <Dato icono={Banknote} titulo="Efectivo" valor={r.porMedio.EFECTIVO} />
@@ -87,6 +88,8 @@ export function Caja() {
             <Dato icono={BookOpen} titulo="Se fió" valor={r.porMedio.FIADO} />
             <Dato icono={HandCoins} titulo="Abonos recibidos" valor={r.abonos} />
           </div>
+
+          <Cajon resumen={r} esHoy={dia === hoy} />
 
           {/* min-w-0: sin esto, el texto largo de una venta estira la columna y desborda la página en el celular. */}
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
@@ -126,7 +129,7 @@ export function Caja() {
                         <span className={`w-20 shrink-0 text-right font-semibold text-stone-900 ${v.anulada ? 'line-through' : ''}`}>
                           {formatearPesos(v.total)}
                         </span>
-                        {!v.anulada && dia === hoy && (
+                        {!v.anulada && dia === hoy && !r.cierre && (
                           <button
                             onClick={() => setAnulando(v)}
                             className="shrink-0 rounded-md p-1 text-stone-400 transition hover:bg-red-50 hover:text-margen"

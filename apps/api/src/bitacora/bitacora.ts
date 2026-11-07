@@ -59,6 +59,7 @@ const ACCIONES: Record<string, [string, Describir?]> = {
   'POST /api/clientes/:id/abonos': ['Registró un abono', (p) => `Cliente ${num(p)}: ${formatearPesos(Number(p.body.monto))}`],
   'POST /api/clientes/:id/suprimir': ['Suprimió los datos de un cliente', (p) => `Cliente ${num(p)}`],
   'POST /api/ventas': ['Registró una venta', (_, r) => `Venta #${r.id} · ${r.medio} · ${formatearPesos(Number(r.total))}`],
+  'POST /api/ventas/:id/anular': ['Anuló una venta', (p, r) => `Venta ${num(p)} · ${formatearPesos(Number(r.total))} · ${p.body.motivo}`],
 };
 
 /** Después de cada cambio que salió bien, anota en la bitácora quién lo hizo. */

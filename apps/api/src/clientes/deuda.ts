@@ -5,7 +5,7 @@ import { abonos, clientes, ventas } from '../db/esquema';
 // como subconsultas para que la base de datos haga la suma en una sola consulta.
 export const totalFiado = sql<number>`coalesce((
   select sum(${ventas.total}) from ${ventas}
-  where ${ventas.clienteId} = ${clientes.id} and ${ventas.medio} = 'FIADO'
+  where ${ventas.clienteId} = ${clientes.id} and ${ventas.medio} = 'FIADO' and ${ventas.anuladaEn} is null
 ), 0)::int`;
 
 export const totalAbonado = sql<number>`coalesce((

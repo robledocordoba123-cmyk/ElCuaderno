@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { and, desc, eq, gte, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
 import { MEDIOS_DE_PAGO, type MedioDePago, type ResumenCaja } from '@elcuaderno/shared';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
 import { abonos, detallesVenta, productos, ventas } from '../db/esquema';
@@ -12,7 +12,8 @@ export class CajaService {
   /** HU-07: cierre de caja de un día en hora de Colombia. */
   async resumen(tiendaId: number, dia = diaLocal()): Promise<ResumenCaja> {
     const { desde, hasta } = limitesDelDia(dia);
-    const delDia = and(eq(ventas.tiendaId, tiendaId), gte(ventas.creadaEn, desde), lt(ventas.creadaEn, hasta));
+    // Las ventas anuladas no cuentan: ni en la caja, ni en la ganancia, ni en lo más vendido.
+    const delDia = and(eq(ventas.tiendaId, tiendaId), gte(ventas.creadaEn, desde), lt(ventas.creadaEn, hasta), isNull(ventas.anuladaEn));
     const unidades = sql<number>`sum(${detallesVenta.cantidad})::int`;
 
     const [porMedioFilas, [abonado], [ganancia], masVendidos] = await Promise.all([

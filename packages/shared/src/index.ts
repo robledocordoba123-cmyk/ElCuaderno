@@ -80,6 +80,12 @@ export const ventaSchema = z
   });
 export type VentaDto = z.infer<typeof ventaSchema>;
 
+/** Anular una venta: la dueña debe dejar escrito por qué. */
+export const anulacionSchema = z.object({
+  motivo: texto(3, 120, 'El motivo'),
+});
+export type AnulacionDto = z.infer<typeof anulacionSchema>;
+
 export const abonoSchema = z.object({
   monto: pesos.positive('El abono debe ser mayor que cero'),
 });
@@ -107,6 +113,8 @@ export interface Venta {
   cliente: string | null;
   creadaEn: string;
   items: { producto: string; cantidad: number; precioUnitario: number }[];
+  /** Si la dueña la anuló: cuándo, quién y por qué. Las anuladas no cuentan en caja ni en deudas. */
+  anulada: { en: string; por: string; motivo: string } | null;
 }
 export interface ResumenCaja {
   dia: string;

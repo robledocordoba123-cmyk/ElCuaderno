@@ -48,7 +48,7 @@ export class ClientesService {
       this.db
         .select({ id: ventas.id, monto: ventas.total, fecha: ventas.creadaEn })
         .from(ventas)
-        .where(sql`${ventas.clienteId} = ${id} and ${ventas.medio} = 'FIADO'`),
+        .where(sql`${ventas.clienteId} = ${id} and ${ventas.medio} = 'FIADO' and ${ventas.anuladaEn} is null`),
       this.db.select({ id: abonos.id, monto: abonos.monto, fecha: abonos.creadoEn }).from(abonos).where(eq(abonos.clienteId, id)),
     ]);
     const movimientos = [

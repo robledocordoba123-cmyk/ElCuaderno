@@ -80,6 +80,24 @@ export const ventaSchema = z
   });
 export type VentaDto = z.infer<typeof ventaSchema>;
 
+/** Base: el efectivo con que se abre el cajón del día (puede ser cero). */
+export const baseCajaSchema = z.object({ monto: pesos });
+export type BaseCajaDto = z.infer<typeof baseCajaSchema>;
+
+/** Gasto: plata que sale del cajón (pago al proveedor, domicilio...). */
+export const gastoSchema = z.object({
+  descripcion: texto(3, 80, 'El concepto'),
+  monto: pesos.positive('El gasto debe ser mayor que cero'),
+});
+export type GastoDto = z.infer<typeof gastoSchema>;
+
+/** Cierre: lo que la dueña cuenta en el cajón al final del día. */
+export const cierreSchema = z.object({
+  contado: pesos,
+  nota: z.string().trim().max(200, 'La nota es demasiado larga').optional(),
+});
+export type CierreDto = z.infer<typeof cierreSchema>;
+
 /** Anular una venta: la dueña debe dejar escrito por qué. */
 export const anulacionSchema = z.object({
   motivo: texto(3, 120, 'El motivo'),
@@ -121,9 +139,34 @@ export interface ResumenCaja {
   ventas: number;
   porMedio: Record<MedioDePago, number>;
   abonos: number;
+  /** Efectivo con que se abrió el cajón. */
+  base: number;
+  /** Total de gastos que salieron del cajón. */
+  gastos: number;
+  /** Lo que debe haber en el cajón: base + ventas en efectivo + abonos − gastos. */
   enCaja: number;
   ganancia: number;
   masVendidos: { producto: string; unidades: number }[];
+  listaGastos: GastoCaja[];
+  cierre: CierreCaja | null;
+}
+export interface GastoCaja {
+  id: number;
+  descripcion: string;
+  monto: number;
+  usuario: string;
+  en: string;
+}
+export interface CierreCaja {
+  esperado: number;
+  contado: number;
+  /** contado − esperado: positivo sobra, negativo falta. */
+  diferencia: number;
+  nota: string | null;
+  por: string;
+  en: string;
+  /** El cajón cambió después de cerrar (por ejemplo, otra venta en efectivo). */
+  cambioDespues: boolean;
 }
 /** La sesión viaja en una cookie httpOnly: el navegador la guarda y JavaScript no puede leerla. */
 export interface Sesion {

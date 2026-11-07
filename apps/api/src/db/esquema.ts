@@ -1,9 +1,10 @@
 // Tablas de ElCuaderno. RN-01: todo el dinero es `integer` (pesos enteros).
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { boolean, check, date, index, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 export const rolEnum = pgEnum('rol', ['DUENO', 'CAJERO']);
 export const medioEnum = pgEnum('medio_de_pago', ['EFECTIVO', 'NEQUI', 'FIADO']);
+export const movimientoCajaEnum = pgEnum('movimiento_caja', ['BASE', 'GASTO']);
 
 export const tiendas = pgTable('tiendas', {
   id: serial('id').primaryKey(),
@@ -130,4 +131,45 @@ export const bitacora = pgTable(
     creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('bitacora_tienda_fecha_idx').on(t.tiendaId, t.creadoEn)],
+);
+
+/**
+ * Movimientos del cajón que no son ventas: la base con que se abre el día y los gastos
+ * que salen del cajón (pago al proveedor, el domicilio...). `dia` es el día local (Colombia).
+ */
+export const movimientosCaja = pgTable(
+  'movimientos_caja',
+  {
+    id: serial('id').primaryKey(),
+    tiendaId: integer('tienda_id').notNull().references(() => tiendas.id),
+    dia: date('dia', { mode: 'string' }).notNull(),
+    tipo: movimientoCajaEnum('tipo').notNull(),
+    monto: integer('monto').notNull(),
+    descripcion: text('descripcion'),
+    usuarioId: integer('usuario_id').notNull().references(() => usuarios.id),
+    creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('movimientos_monto_valido', sql`${t.monto} >= 0 AND (${t.tipo} = 'BASE' OR ${t.monto} > 0)`),
+    check('movimientos_gasto_con_descripcion', sql`${t.tipo} = 'BASE' OR ${t.descripcion} IS NOT NULL`),
+    // Una sola base por tienda y día.
+    uniqueIndex('movimientos_una_base_por_dia').on(t.tiendaId, t.dia).where(sql`${t.tipo} = 'BASE'`),
+    index('movimientos_tienda_dia_idx').on(t.tiendaId, t.dia),
+  ],
+);
+
+/** Cierre del día: lo que debía haber, lo que la dueña contó y la diferencia. Uno por día. */
+export const cierresCaja = pgTable(
+  'cierres_caja',
+  {
+    id: serial('id').primaryKey(),
+    tiendaId: integer('tienda_id').notNull().references(() => tiendas.id),
+    dia: date('dia', { mode: 'string' }).notNull(),
+    esperado: integer('esperado').notNull(),
+    contado: integer('contado').notNull(),
+    nota: text('nota'),
+    usuarioId: integer('usuario_id').notNull().references(() => usuarios.id),
+    creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check('cierres_contado_valido', sql`${t.contado} >= 0`), uniqueIndex('cierres_uno_por_dia').on(t.tiendaId, t.dia)],
 );

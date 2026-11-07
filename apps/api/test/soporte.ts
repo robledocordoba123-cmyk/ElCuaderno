@@ -29,7 +29,7 @@ export async function crearApp(): Promise<Contexto> {
 
 export async function limpiar(db: BaseDeDatos) {
   await db.execute(
-    sql`TRUNCATE bitacora, detalles_venta, ventas, abonos, clientes, productos, usuarios, tiendas RESTART IDENTITY CASCADE`,
+    sql`TRUNCATE bitacora, cierres_caja, movimientos_caja, detalles_venta, ventas, abonos, clientes, productos, usuarios, tiendas RESTART IDENTITY CASCADE`,
   );
 }
 

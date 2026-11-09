@@ -38,6 +38,8 @@
   --color-amber-950: #2e2204;
 
   --color-margen: #e0563f;
+  /* Tinta de bolígrafo azul: color de las gráficas (validado contra el papel: luminosidad, croma y contraste). */
+  --color-boligrafo: #2f56b0;
 }
 
 html {

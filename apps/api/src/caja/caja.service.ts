@@ -6,11 +6,13 @@ import {
   type CierreDto,
   type GastoDto,
   type MedioDePago,
+  type ReportePeriodo,
   type ResumenCaja,
 } from '@elcuaderno/shared';
 import { NoEncontrado, ReglaDeNegocio } from '../comun/errores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
 import { abonos, cierresCaja, detallesVenta, movimientosCaja, productos, usuarios, ventas } from '../db/esquema';
+import { config } from '../config';
 import { diaLocal, limitesDelDia } from '../tiempo';
 
 @Injectable()
@@ -118,6 +120,105 @@ export class CajaService {
             cambioDespues: enCaja !== cierre.esperado,
           }
         : null,
+    };
+  }
+
+  /**
+   * Reporte de un rango de días (hora de Colombia): totales, cada día del rango (también
+   * los días sin ventas, en cero, para que la gráfica no salte días) y los 10 más vendidos.
+   */
+  async reporte(tiendaId: number, desde: string, hasta: string): Promise<ReportePeriodo> {
+    const inicio = limitesDelDia(desde).desde;
+    const fin = limitesDelDia(hasta).hasta;
+    const delRango = and(eq(ventas.tiendaId, tiendaId), gte(ventas.creadaEn, inicio), lt(ventas.creadaEn, fin), isNull(ventas.anuladaEn));
+    // La zona va escrita en la consulta y no como parámetro: si fuera parámetro, PostgreSQL
+    // vería distintas la expresión del SELECT y la del GROUP BY. Se valida antes de usarla.
+    if (!/^[A-Za-z_]+(\/[A-Za-z_]+)*$/.test(config.zonaHoraria)) throw new Error('ZONA_HORARIA no es válida');
+    const diaDeVenta = sql<string>`to_char(${ventas.creadaEn} at time zone '${sql.raw(config.zonaHoraria)}', 'YYYY-MM-DD')`;
+    const gananciaExpr = sql<number>`coalesce(sum((${detallesVenta.precioUnitario} - ${detallesVenta.costoUnitario}) * ${detallesVenta.cantidad}), 0)::int`;
+    const unidades = sql<number>`sum(${detallesVenta.cantidad})::int`;
+
+    const [porDiaYMedio, gananciaPorDia, masVendidos, [abonado], [gastado]] = await Promise.all([
+      this.db
+        .select({
+          dia: diaDeVenta,
+          medio: ventas.medio,
+          total: sql<number>`coalesce(sum(${ventas.total}), 0)::int`,
+          cantidad: sql<number>`count(*)::int`,
+        })
+        .from(ventas)
+        .where(delRango)
+        .groupBy(diaDeVenta, ventas.medio),
+      this.db
+        .select({ dia: diaDeVenta, ganancia: gananciaExpr })
+        .from(detallesVenta)
+        .innerJoin(ventas, eq(ventas.id, detallesVenta.ventaId))
+        .where(delRango)
+        .groupBy(diaDeVenta),
+      this.db
+        .select({
+          producto: productos.nombre,
+          unidades,
+          vendido: sql<number>`sum(${detallesVenta.precioUnitario} * ${detallesVenta.cantidad})::int`,
+        })
+        .from(detallesVenta)
+        .innerJoin(ventas, eq(ventas.id, detallesVenta.ventaId))
+        .innerJoin(productos, eq(productos.id, detallesVenta.productoId))
+        .where(delRango)
+        .groupBy(productos.nombre)
+        .orderBy(desc(unidades))
+        .limit(10),
+      this.db
+        .select({ total: sql<number>`coalesce(sum(${abonos.monto}), 0)::int` })
+        .from(abonos)
+        .where(and(eq(abonos.tiendaId, tiendaId), gte(abonos.creadoEn, inicio), lt(abonos.creadoEn, fin))),
+      this.db
+        .select({ total: sql<number>`coalesce(sum(${movimientosCaja.monto}), 0)::int` })
+        .from(movimientosCaja)
+        .where(
+          and(
+            eq(movimientosCaja.tiendaId, tiendaId),
+            eq(movimientosCaja.tipo, 'GASTO'),
+            gte(movimientosCaja.dia, desde),
+            sql`${movimientosCaja.dia} <= ${hasta}`,
+          ),
+        ),
+    ]);
+
+    // Todos los días del rango, en orden, empezando en cero.
+    const dias = new Map<string, { dia: string; ventas: number; vendido: number; ganancia: number }>();
+    for (let d = new Date(`${desde}T12:00:00Z`); d <= new Date(`${hasta}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
+      const dia = d.toISOString().slice(0, 10);
+      dias.set(dia, { dia, ventas: 0, vendido: 0, ganancia: 0 });
+    }
+    const porMedio = Object.fromEntries(MEDIOS_DE_PAGO.map((m) => [m, 0])) as Record<MedioDePago, number>;
+    for (const f of porDiaYMedio) {
+      const d = dias.get(f.dia);
+      if (d) {
+        d.ventas += Number(f.cantidad);
+        d.vendido += Number(f.total);
+      }
+      porMedio[f.medio] += Number(f.total);
+    }
+    for (const f of gananciaPorDia) {
+      const d = dias.get(f.dia);
+      if (d) d.ganancia = Number(f.ganancia);
+    }
+    const lista = [...dias.values()];
+
+    return {
+      desde,
+      hasta,
+      totales: {
+        ventas: lista.reduce((s, d) => s + d.ventas, 0),
+        vendido: lista.reduce((s, d) => s + d.vendido, 0),
+        porMedio,
+        ganancia: lista.reduce((s, d) => s + d.ganancia, 0),
+        abonos: Number(abonado.total),
+        gastos: Number(gastado.total),
+      },
+      dias: lista,
+      masVendidos: masVendidos.map((m) => ({ producto: m.producto, unidades: Number(m.unidades), vendido: Number(m.vendido) })),
     };
   }
 

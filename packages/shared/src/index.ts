@@ -164,6 +164,23 @@ export interface ResumenCaja {
   listaGastos: GastoCaja[];
   cierre: CierreCaja | null;
 }
+/** Reporte de un rango de días (máximo 92): totales, cada día y lo más vendido. */
+export interface ReportePeriodo {
+  desde: string;
+  hasta: string;
+  totales: {
+    ventas: number;
+    vendido: number;
+    porMedio: Record<MedioDePago, number>;
+    ganancia: number;
+    abonos: number;
+    gastos: number;
+  };
+  /** Un registro por cada día del rango, también los días sin ventas (en cero). */
+  dias: { dia: string; ventas: number; vendido: number; ganancia: number }[];
+  masVendidos: { producto: string; unidades: number; vendido: number }[];
+}
+
 export interface GastoCaja {
   id: number;
   descripcion: string;

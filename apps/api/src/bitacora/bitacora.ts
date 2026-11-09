@@ -1,7 +1,7 @@
 import { CallHandler, Controller, ExecutionContext, Get, Global, Injectable, Module, NestInterceptor, Query } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { desc, eq } from 'drizzle-orm';
-import { tap, type Observable } from 'rxjs';
+import { mergeMap, type Observable } from 'rxjs';
 import { formatearPesos, type RegistroBitacora } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
@@ -80,10 +80,13 @@ export class BitacoraInterceptor implements NestInterceptor {
     const accion = ACCIONES[clave];
     if (!accion || !req.usuario) return siguiente.handle();
     return siguiente.handle().pipe(
-      tap((respuesta) => {
+      // Se espera la anotación antes de responder: así las acciones quedan en el orden en
+      // que pasaron. Si anotar falla, el cambio ya se hizo y la respuesta sale igual.
+      mergeMap(async (respuesta) => {
         const [texto, describir] = accion;
         const detalle = describir?.(req, (respuesta ?? {}) as Record<string, unknown>);
-        void this.servicio.registrar(req.usuario, texto, detalle).catch((e) => console.error('No se pudo anotar en la bitácora', e));
+        await this.servicio.registrar(req.usuario, texto, detalle).catch((e) => console.error('No se pudo anotar en la bitácora', e));
+        return respuesta;
       }),
     );
   }

@@ -41,9 +41,10 @@ describe('Caja del día', () => {
       enCaja: 15000,
       // (2500-1800)*4 + (10500-8700)*3
       ganancia: 2800 + 5400,
+      // Ordenados por plata: café 31.500 antes que gaseosa 10.000.
       masVendidos: [
-        { producto: 'Gaseosa', unidades: 4 },
-        { producto: 'Café', unidades: 3 },
+        { producto: 'Café', unidades: 3, porPeso: false },
+        { producto: 'Gaseosa', unidades: 4, porPeso: false },
       ],
       listaGastos: [],
       cierre: null,
@@ -58,7 +59,7 @@ describe('Caja del día', () => {
       .insert(ventas)
       .values({ tiendaId: tienda.id, usuarioId: usuario.id, medio: 'EFECTIVO', total: 1000, creadaEn: new Date('2026-03-11T04:30:00Z') })
       .returning();
-    await ctx.db.insert(detallesVenta).values({ ventaId: venta.id, productoId: p.id, cantidad: 1, precioUnitario: 1000, costoUnitario: 500 });
+    await ctx.db.insert(detallesVenta).values({ ventaId: venta.id, productoId: p.id, cantidad: 1, precioUnitario: 1000, costoUnitario: 500, subtotal: 1000, costoTotal: 500 });
 
     const dia10 = await ctx.http().get('/api/caja/resumen?dia=2026-03-10').set(conToken(tienda.dueno)).expect(200);
     const dia11 = await ctx.http().get('/api/caja/resumen?dia=2026-03-11').set(conToken(tienda.dueno)).expect(200);

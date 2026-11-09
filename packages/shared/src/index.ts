@@ -23,6 +23,14 @@ export const loginSchema = z.object({
 });
 export type LoginDto = z.infer<typeof loginSchema>;
 
+/**
+ * Venta a granel: un producto "por peso" (queso, arroz suelto, carne) guarda el precio y el
+ * costo POR KILO, como en las básculas, y el stock y las cantidades en GRAMOS (enteros).
+ * Los productos por unidad siguen igual: precio por unidad y stock en unidades.
+ */
+export const GRAMOS_POR_LIBRA = 500;
+export const PESO_MAXIMO_GRAMOS = 50_000;
+
 export const productoSchema = z
   .object({
     nombre: texto(2, 80, 'El nombre'),
@@ -30,6 +38,7 @@ export const productoSchema = z
     costo: pesos,
     stock: z.number().int().nonnegative('El stock no puede ser negativo'),
     stockMinimo: z.number().int().nonnegative(),
+    porPeso: z.boolean().default(false),
   })
   .refine((p) => p.costo <= p.precio, {
     message: 'El costo no puede ser mayor que el precio de venta',
@@ -42,7 +51,9 @@ export type ProductoDto = z.infer<typeof productoSchema>;
  * Si no se dice el costo, se toma el costo actual del producto.
  */
 export const entradaStockSchema = z.object({
-  cantidad: z.number().int().positive('La cantidad debe ser mayor que cero').max(100000),
+  /** Unidades, o gramos si el producto es por peso. */
+  cantidad: z.number().int().positive('La cantidad debe ser mayor que cero').max(1_000_000),
+  /** Costo por unidad, o por kilo si el producto es por peso. */
   costoUnitario: pesos.optional(),
   proveedor: z.string().trim().max(60, 'El nombre del proveedor es demasiado largo').optional(),
 });
@@ -79,7 +90,8 @@ export const ventaSchema = z
       .array(
         z.object({
           productoId: z.number().int().positive(),
-          cantidad: z.number().int().positive('La cantidad debe ser mayor que cero').max(999),
+          /** Unidades (máx. 999), o gramos si el producto es por peso (máx. 50 kg). */
+          cantidad: z.number().int().positive('La cantidad debe ser mayor que cero').max(PESO_MAXIMO_GRAMOS),
         }),
       )
       .min(1, 'Agrega al menos un producto'),
@@ -144,7 +156,8 @@ export interface Venta {
   total: number;
   cliente: string | null;
   creadaEn: string;
-  items: { producto: string; cantidad: number; precioUnitario: number }[];
+  /** precioUnitario es por unidad, o por kilo si porPeso; subtotal es lo que se cobró por la línea. */
+  items: { producto: string; cantidad: number; precioUnitario: number; subtotal: number; porPeso: boolean }[];
   /** Si la dueña la anuló: cuándo, quién y por qué. Las anuladas no cuentan en caja ni en deudas. */
   anulada: { en: string; por: string; motivo: string } | null;
 }
@@ -160,7 +173,7 @@ export interface ResumenCaja {
   /** Lo que debe haber en el cajón: base + ventas en efectivo + abonos − gastos. */
   enCaja: number;
   ganancia: number;
-  masVendidos: { producto: string; unidades: number }[];
+  masVendidos: { producto: string; unidades: number; porPeso: boolean }[];
   listaGastos: GastoCaja[];
   cierre: CierreCaja | null;
 }
@@ -178,7 +191,8 @@ export interface ReportePeriodo {
   };
   /** Un registro por cada día del rango, también los días sin ventas (en cero). */
   dias: { dia: string; ventas: number; vendido: number; ganancia: number }[];
-  masVendidos: { producto: string; unidades: number; vendido: number }[];
+  /** Ordenados por lo vendido en pesos (no se pueden comparar unidades con gramos). */
+  masVendidos: { producto: string; unidades: number; porPeso: boolean; vendido: number }[];
 }
 
 export interface GastoCaja {
@@ -214,4 +228,25 @@ export interface RegistroBitacora {
 /** Formatea pesos colombianos: 12500 → "$ 12.500". */
 export function formatearPesos(valor: number): string {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
+}
+
+/**
+ * Lo que se cobra por una línea. Por unidad: precio × cantidad. Por peso: precio del kilo ×
+ * gramos ÷ 1000, redondeado a los 50 pesos más cercanos (no hay monedas más pequeñas).
+ */
+export function subtotalLinea(precio: number, cantidad: number, porPeso: boolean): number {
+  if (!porPeso) return precio * cantidad;
+  return Math.round((precio * cantidad) / 1000 / 50) * 50;
+}
+
+/** Gramos que alcanzan para cierta plata ("deme 2.000 de queso"). */
+export function gramosPorPlata(precioKilo: number, plata: number): number {
+  return Math.floor((plata * 1000) / precioKilo);
+}
+
+/** 3 → "3 und.", 250 → "250 g", 1500 → "1,5 kg". */
+export function formatearCantidad(cantidad: number, porPeso: boolean): string {
+  if (!porPeso) return `${cantidad} und.`;
+  if (cantidad < 1000) return `${cantidad} g`;
+  return `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(cantidad / 1000)} kg`;
 }

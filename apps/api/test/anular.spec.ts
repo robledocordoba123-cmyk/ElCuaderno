@@ -34,7 +34,7 @@ describe('Anular una venta', () => {
 
     const caja = await ctx.http().get('/api/caja/resumen').set(conToken(tienda.dueno)).expect(200);
     expect(caja.body).toMatchObject({ ventas: 1, enCaja: 3000, ganancia: 1000 });
-    expect(caja.body.masVendidos).toEqual([{ producto: 'Arroz', unidades: 1 }]);
+    expect(caja.body.masVendidos).toEqual([{ producto: 'Arroz', unidades: 1, porPeso: false }]);
 
     // Sigue en la lista del día, marcada como anulada, para que la dueña la vea.
     const lista = await ctx.http().get('/api/ventas').set(conToken(tienda.dueno)).expect(200);

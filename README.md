@@ -40,7 +40,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (67 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (74 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```

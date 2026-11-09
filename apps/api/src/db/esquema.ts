@@ -34,6 +34,8 @@ export const productos = pgTable(
     costo: integer('costo').notNull(),
     stock: integer('stock').notNull(),
     stockMinimo: integer('stock_minimo').notNull().default(0),
+    // Venta a granel: precio y costo por kilo; stock en gramos.
+    porPeso: boolean('por_peso').notNull().default(false),
     activo: boolean('activo').notNull().default(true),
   },
   (t) => [
@@ -97,6 +99,10 @@ export const detallesVenta = pgTable(
     // RN-04: precio y costo del momento de la venta.
     precioUnitario: integer('precio_unitario').notNull(),
     costoUnitario: integer('costo_unitario').notNull(),
+    // Lo cobrado y lo que costó la línea, ya calculados (por peso se redondea a 50 pesos):
+    // la caja y los reportes suman estas columnas y no recalculan precio × cantidad.
+    subtotal: integer('subtotal').notNull(),
+    costoTotal: integer('costo_total').notNull(),
   },
   (t) => [check('detalles_cantidad_positiva', sql`${t.cantidad} > 0`), index('detalles_venta_idx').on(t.ventaId)],
 );

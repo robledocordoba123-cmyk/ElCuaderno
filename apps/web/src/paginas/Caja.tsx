@@ -1,5 +1,5 @@
 // Caja del día (solo la dueña): cuánto entró por cada medio, la ganancia y las ventas.
-import { anulacionSchema, formatearPesos, type ResumenCaja, type Venta } from '@elcuaderno/shared';
+import { anulacionSchema, formatearCantidad, formatearPesos, type ResumenCaja, type Venta } from '@elcuaderno/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, ScrollText, Smartphone, TrendingUp, Undo2, Wallet, BarChart3 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
@@ -112,7 +112,7 @@ export function Caja() {
                       <li key={m.producto} className="flex items-center gap-3 text-sm">
                         <span className="grid h-6 w-6 place-items-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">{i + 1}</span>
                         <span className="flex-1 text-stone-700">{m.producto}</span>
-                        <span className="font-semibold text-stone-900">{m.unidades} und.</span>
+                        <span className="font-semibold text-stone-900">{formatearCantidad(m.unidades, m.porPeso)}</span>
                       </li>
                     ))}
                   </ol>
@@ -129,7 +129,7 @@ export function Caja() {
                       <div className={`flex items-center gap-3 ${v.anulada ? 'opacity-60' : ''}`}>
                         <span className="w-20 shrink-0 whitespace-nowrap text-stone-400">{hora(v.creadaEn)}</span>
                         <span className={`min-w-0 flex-1 truncate text-stone-700 ${v.anulada ? 'line-through' : ''}`}>
-                          {v.items.map((i) => `${i.cantidad} ${i.producto}`).join(', ')}
+                          {v.items.map((i) => `${i.porPeso ? formatearCantidad(i.cantidad, true) + ' de' : i.cantidad} ${i.producto}`).join(', ')}
                         </span>
                         <span className={`shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${etiquetaMedio[v.medio]}`}>
                           {v.medio === 'FIADO' ? `Fiado · ${v.cliente}` : v.medio === 'NEQUI' ? 'Nequi' : 'Efectivo'}
@@ -193,14 +193,16 @@ function AnularVenta({ venta, alCerrar }: { venta: Venta; alCerrar: () => void }
     <Modal titulo={`Anular la venta de las ${hora(venta.creadaEn)}`} abierto alCerrar={alCerrar}>
       <form onSubmit={alEnviar} className="space-y-4" noValidate>
         <div className="rounded-lg border border-dashed border-stone-300 bg-stone-100 p-3 text-sm">
-          <p className="text-stone-700">{venta.items.map((i) => `${i.cantidad} ${i.producto}`).join(', ')}</p>
+          <p className="text-stone-700">
+            {venta.items.map((i) => `${i.porPeso ? formatearCantidad(i.cantidad, true) + ' de' : i.cantidad} ${i.producto}`).join(', ')}
+          </p>
           <p className="mt-1 font-mono font-bold text-stone-900">
             {formatearPesos(venta.total)} · {venta.medio === 'FIADO' ? `fiado a ${venta.cliente}` : venta.medio === 'NEQUI' ? 'Nequi' : 'efectivo'}
           </p>
         </div>
         <p className="text-sm text-stone-600">
-          Las unidades vuelven al inventario y la venta sale de la caja{venta.medio === 'FIADO' ? ' y de la deuda del vecino' : ''}. Queda en la
-          bitácora y no se puede deshacer.
+          Lo vendido vuelve al inventario y la venta sale de la caja{venta.medio === 'FIADO' ? ' y de la deuda del vecino' : ''}. Queda en la bitácora
+          y no se puede deshacer.
         </p>
         <Campo
           etiqueta="¿Por qué se anula?"

@@ -1,6 +1,6 @@
 // Reportes (solo la dueña): cuánto se vendió y se ganó en una semana, un mes o un rango.
 // La gráfica es una sola serie (lo vendido por día), con su tabla para quien no quiera leerla.
-import { formatearPesos, type ReportePeriodo } from '@elcuaderno/shared';
+import { formatearCantidad, formatearPesos, type ReportePeriodo } from '@elcuaderno/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
@@ -70,7 +70,9 @@ export function Reportes() {
             onClick={() => setElegido(o)}
             aria-pressed={elegido.id === o.id}
             className={`rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition ${
-              elegido.id === o.id ? 'border-stone-900 bg-amber-300 text-stone-900' : 'border-stone-300 bg-stone-50 text-stone-600 hover:border-stone-900'
+              elegido.id === o.id
+                ? 'border-stone-900 bg-amber-300 text-stone-900'
+                : 'border-stone-300 bg-stone-50 text-stone-600 hover:border-stone-900'
             }`}
           >
             {o.texto}
@@ -84,7 +86,11 @@ export function Reportes() {
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Cifra titulo="Vendido" valor={r.totales.vendido} nota={`${r.totales.ventas} ventas`} />
-            <Cifra titulo="Ganancia" valor={r.totales.ganancia} nota={r.totales.vendido ? `${Math.round((r.totales.ganancia / r.totales.vendido) * 100)} % de lo vendido` : undefined} />
+            <Cifra
+              titulo="Ganancia"
+              valor={r.totales.ganancia}
+              nota={r.totales.vendido ? `${Math.round((r.totales.ganancia / r.totales.vendido) * 100)} % de lo vendido` : undefined}
+            />
             <Cifra titulo="Se fió" valor={r.totales.porMedio.FIADO} nota={`Abonaron ${formatearPesos(r.totales.abonos)}`} />
             <Cifra titulo="Gastos del cajón" valor={r.totales.gastos} />
           </div>
@@ -131,13 +137,15 @@ export function Reportes() {
                 <ol className="divide-y divide-dashed divide-stone-300">
                   {r.masVendidos.map((m, i) => (
                     <li key={m.producto} className="flex items-center gap-3 py-2 text-sm">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-stone-900">{i + 1}</span>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-stone-900">
+                        {i + 1}
+                      </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-stone-800">{m.producto}</span>
                         {/* En el celular las unidades van debajo, para que el nombre quepa. */}
-                        <span className="block text-xs text-stone-500 sm:hidden">{m.unidades} und.</span>
+                        <span className="block text-xs text-stone-500 sm:hidden">{formatearCantidad(m.unidades, m.porPeso)}</span>
                       </span>
-                      <span className="hidden shrink-0 font-mono text-stone-500 sm:block">{m.unidades} und.</span>
+                      <span className="hidden shrink-0 font-mono text-stone-500 sm:block">{formatearCantidad(m.unidades, m.porPeso)}</span>
                       <span className="w-24 shrink-0 text-right font-mono font-semibold text-stone-900">{formatearPesos(m.vendido)}</span>
                     </li>
                   ))}
@@ -212,7 +220,10 @@ function GraficaVentas({ dias }: { dias: ReportePeriodo['dias'] }) {
                     />
                   )}
                   {i === indiceMaximo && activo === null && (
-                    <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] font-semibold text-stone-700" style={{ bottom: alto + 4 }}>
+                    <span
+                      className="pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] font-semibold text-stone-700"
+                      style={{ bottom: alto + 4 }}
+                    >
                       {compacto(d.vendido)}
                     </span>
                   )}

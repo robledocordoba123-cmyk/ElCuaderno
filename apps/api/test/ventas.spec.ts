@@ -29,7 +29,7 @@ describe('Ventas', () => {
       .expect(201);
 
     expect(res.body.total).toBe(9600);
-    expect(res.body.items).toEqual([{ producto: 'Arroz', cantidad: 3, precioUnitario: 3200 }]);
+    expect(res.body.items).toEqual([{ producto: 'Arroz', cantidad: 3, precioUnitario: 3200, subtotal: 9600, porPeso: false }]);
     expect(await stockDe(arroz.id)).toBe(7);
   });
 
@@ -44,7 +44,7 @@ describe('Ventas', () => {
       .send({ medio: 'EFECTIVO', items: [{ productoId: arroz.id, cantidad: 2 }, { productoId: panela.id, cantidad: 5 }] })
       .expect(422);
 
-    expect(res.body.message).toBe('No hay suficiente Panela: quedan 1');
+    expect(res.body.message).toBe('No hay suficiente Panela: quedan 1 und.');
     expect(await stockDe(arroz.id)).toBe(10); // El arroz no quedó descontado a medias.
     const ventas = await ctx.http().get('/api/ventas').set(conToken(tienda.dueno)).expect(200);
     expect(ventas.body).toHaveLength(0);

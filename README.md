@@ -23,6 +23,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **El cupo de fiado no se puede pasar.** Antes de fiar se bloquea la fila del cliente (`SELECT ... FOR UPDATE`), así dos fiados o dos abonos al mismo tiempo no se saltan la validación. Otra prueba lo comprueba.
 - **Anular sin borrar.** Una venta equivocada no se borra: la dueña la anula con un motivo, las unidades vuelven al inventario y deja de contar en la caja y en la deuda. Solo ventas de hoy, para que no cambien cierres pasados, y no se anula un fiado que el vecino ya abonó.
 - **El cajón cuadra de verdad.** Lo que debe haber es base + ventas en efectivo + abonos − gastos (el pago al proveedor también sale del cajón). Al cerrar, la dueña escribe lo que contó y queda guardada la diferencia; después del cierre ya no se mueven la base, los gastos ni las anulaciones de ese día, y si entra otra venta la caja lo avisa.
+- **Costo real de la mercancía.** Cada llegada guarda cantidad, costo y proveedor, y el costo del producto pasa a ser el promedio ponderado (10 unidades a $ 2.000 + 10 a $ 2.400 → $ 2.200). Así la ganancia de la caja refleja lo que de verdad pagó la tienda, y no se acepta una compra que deje el costo por encima del precio.
 - **La deuda no se guarda: se calcula** (fiados − abonos) con subconsultas en SQL, así nunca queda desincronizada.
 - **Dinero en pesos enteros** (`integer`), nunca `float`; el detalle de cada venta guarda el precio y el costo del momento, y "hoy" se calcula en hora de Colombia.
 - **Roles.** La dueña maneja precios, cupos y la caja; el cajero vende y recibe abonos. Una guarda global de NestJS exige el token en todas las rutas y revisa el rol con `@Roles('DUENO')`.
@@ -39,7 +40,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (55 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (63 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```
@@ -60,7 +61,8 @@ Todas las rutas van bajo `/api` y exigen la cookie de sesión (o `Authorization:
 | GET / POST | `/auth/yo`, `/auth/salir` | Todos | Confirma la sesión / la cierra borrando la cookie |
 | GET | `/productos?q=&bajoStock=true` | Todos | Productos con alerta de stock bajo |
 | POST / PUT / DELETE | `/productos`, `/productos/:id` | Dueña | Crear, editar, desactivar |
-| PATCH | `/productos/:id/entrada` | Dueña | Suma mercancía que llegó |
+| PATCH | `/productos/:id/entrada` | Dueña | Llegó mercancía: suma unidades, guarda costo y proveedor, y actualiza el costo con el promedio ponderado |
+| GET | `/productos/:id/entradas` | Dueña | Últimas 20 llegadas del producto |
 | GET | `/clientes?deudores=true`, `/clientes/:id` | Todos | Clientes con deuda, cupo disponible e historial |
 | POST / PUT | `/clientes`, `/clientes/:id` | Dueña | Crear clientes y definir su cupo |
 | POST | `/clientes/:id/abonos` | Todos | Registrar un abono |

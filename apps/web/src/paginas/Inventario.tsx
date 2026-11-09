@@ -1,5 +1,5 @@
 // Inventario: todos pueden ver el stock; solo la dueña crea, edita y registra entradas de mercancía.
-import { entradaStockSchema, formatearPesos, productoSchema, type Producto, type ProductoDto } from '@elcuaderno/shared';
+import { entradaStockSchema, formatearPesos, productoSchema, type EntradaInventario, type Producto, type ProductoDto } from '@elcuaderno/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, PackagePlus, Pencil, Plus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
@@ -160,33 +160,110 @@ function FormularioProducto({ producto, alCerrar }: { producto: Producto | null;
 
 function FormularioEntrada({ producto, alCerrar }: { producto: Producto; alCerrar: () => void }) {
   const queryClient = useQueryClient();
-  const [cantidad, setCantidad] = useState('');
-  const [error, setError] = useState('');
+  const [valores, setValores] = useState({ cantidad: '', costo: String(producto.costo), proveedor: '' });
+  const [errores, setErrores] = useState<Record<string, string>>({});
+  const historial = useQuery({
+    queryKey: ['productos', producto.id, 'entradas'],
+    queryFn: () => api<EntradaInventario[]>(`/productos/${producto.id}/entradas`),
+  });
   const guardar = useMutation({
-    mutationFn: (datos: { cantidad: number }) => api<Producto>(`/productos/${producto.id}/entrada`, { metodo: 'PATCH', cuerpo: datos }),
+    mutationFn: (datos: unknown) => api<Producto>(`/productos/${producto.id}/entrada`, { metodo: 'PATCH', cuerpo: datos }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['productos'] });
       alCerrar();
     },
-    onError: (e) => setError(e instanceof Error ? e.message : 'No se pudo guardar'),
+    onError: (e) => setErrores(e instanceof ErrorApi ? { general: e.message, ...e.errores } : { general: 'No se pudo guardar' }),
   });
+
+  const cantidad = Number(valores.cantidad);
+  const costo = Number(valores.costo.replace(/\./g, ''));
+  const stock = Math.max(producto.stock, 0);
+  // Vista previa del costo promedio: la misma cuenta que hace la API.
+  const costoNuevo = cantidad > 0 && Number.isFinite(costo) ? Math.round((stock * producto.costo + cantidad * costo) / (stock + cantidad)) : null;
 
   function alEnviar(e: FormEvent) {
     e.preventDefault();
-    const resultado = entradaStockSchema.safeParse({ cantidad: Number(cantidad) });
-    if (!resultado.success) return setError(resultado.error.issues[0].message);
+    const resultado = entradaStockSchema.safeParse({ cantidad, costoUnitario: costo, proveedor: valores.proveedor || undefined });
+    if (!resultado.success) {
+      setErrores(Object.fromEntries(resultado.error.issues.map((i) => [String(i.path[0]), i.message])));
+      return;
+    }
+    setErrores({});
     guardar.mutate(resultado.data);
   }
 
   return (
     <Modal titulo={`Llegó mercancía: ${producto.nombre}`} abierto alCerrar={alCerrar}>
       <form onSubmit={alEnviar} className="space-y-3" noValidate>
-        <p className="text-sm text-stone-500">Hoy hay {producto.stock}. ¿Cuántas unidades llegaron?</p>
-        <Campo etiqueta="Unidades que llegaron" type="number" inputMode="numeric" value={cantidad} onChange={(e) => setCantidad(e.target.value)} error={error} autoFocus />
+        <p className="text-sm text-stone-500">
+          Hoy hay {producto.stock}, con costo de {formatearPesos(producto.costo)} y precio de {formatearPesos(producto.precio)}.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Campo
+            etiqueta="Unidades que llegaron"
+            type="number"
+            inputMode="numeric"
+            value={valores.cantidad}
+            onChange={(e) => setValores({ ...valores, cantidad: e.target.value })}
+            error={errores.cantidad}
+            autoFocus
+          />
+          <Campo
+            etiqueta="Costo por unidad"
+            type="number"
+            inputMode="numeric"
+            value={valores.costo}
+            onChange={(e) => setValores({ ...valores, costo: e.target.value })}
+            error={errores.costoUnitario}
+          />
+        </div>
+        <Campo
+          etiqueta="Proveedor (opcional)"
+          placeholder="Ej.: Postobón"
+          value={valores.proveedor}
+          onChange={(e) => setValores({ ...valores, proveedor: e.target.value })}
+          error={errores.proveedor}
+          maxLength={60}
+        />
+        {costoNuevo !== null && (
+          <p
+            className={`rounded-md border border-dashed px-3 py-2 text-sm ${
+              costoNuevo > producto.precio ? 'border-margen bg-red-50 text-red-800' : 'border-stone-300 bg-stone-100 text-stone-700'
+            }`}
+          >
+            El costo quedaría en <strong className="font-mono">{formatearPesos(costoNuevo)}</strong>
+            {costoNuevo > producto.precio
+              ? ', más que el precio de venta. Sube primero el precio.'
+              : ` y la ganancia por unidad en ${formatearPesos(producto.precio - costoNuevo)}.`}
+          </p>
+        )}
+        {errores.general && <Aviso>{errores.general}</Aviso>}
         <Boton type="submit" disabled={guardar.isPending} className="w-full">
           Sumar al inventario
         </Boton>
       </form>
+
+      <div className="mt-5 border-t border-dashed border-stone-300 pt-3">
+        <h3 className="mb-2 text-sm font-semibold text-stone-700">Llegadas anteriores</h3>
+        <ul className="max-h-48 space-y-1.5 overflow-y-auto text-sm">
+          {(historial.data ?? []).map((h) => (
+            <li key={h.id} className="flex justify-between gap-3">
+              <span className="min-w-0 truncate text-stone-500">
+                {fechaCorta(h.fecha)} · {h.proveedor ?? 'sin proveedor'}
+              </span>
+              <span className="shrink-0 font-mono text-stone-900">
+                +{h.cantidad} a {formatearPesos(h.costoUnitario)}
+              </span>
+            </li>
+          ))}
+          {historial.data?.length === 0 && <li className="text-stone-400">Todavía no hay llegadas registradas.</li>}
+        </ul>
+      </div>
     </Modal>
   );
 }
+
+const fechaCorta = (iso: string) =>
+  new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' }).format(
+    new Date(iso),
+  );

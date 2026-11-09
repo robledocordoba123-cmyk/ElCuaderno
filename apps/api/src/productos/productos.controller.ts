@@ -33,7 +33,13 @@ export class ProductosController {
   @Roles('DUENO')
   @Patch(':id/entrada')
   entrada(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(entradaStockSchema)) datos: EntradaStockDto) {
-    return this.productos.entrada(u.tiendaId, id, datos);
+    return this.productos.entrada(u.tiendaId, u.id, id, datos);
+  }
+
+  @Roles('DUENO')
+  @Get(':id/entradas')
+  entradas(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+    return this.productos.entradas(u.tiendaId, id);
   }
 
   @Roles('DUENO')

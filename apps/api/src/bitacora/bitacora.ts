@@ -50,7 +50,10 @@ const num = (p: Peticion, nombre = 'id') => `#${p.params[nombre]}`;
 const ACCIONES: Record<string, [string, Describir?]> = {
   'POST /api/productos': ['Creó un producto', (_, r) => String(r.nombre)],
   'PUT /api/productos/:id': ['Editó un producto', (_, r) => `${r.nombre} · ${formatearPesos(Number(r.precio))}`],
-  'PATCH /api/productos/:id/entrada': ['Registró llegada de mercancía', (p, r) => `${r.nombre}: +${p.body.cantidad} und.`],
+  'PATCH /api/productos/:id/entrada': [
+    'Registró llegada de mercancía',
+    (p, r) => `${r.nombre}: +${p.body.cantidad} und.${p.body.costoUnitario !== undefined ? ` a ${formatearPesos(Number(p.body.costoUnitario))} c/u` : ''}${p.body.proveedor ? ` · ${p.body.proveedor}` : ''}`,
+  ],
   'DELETE /api/productos/:id': ['Quitó un producto', (p) => `Producto ${num(p)}`],
   // De los vecinos solo se anota el número, nunca el nombre: si piden borrar sus datos
   // (Ley 1581), la bitácora, que es inmutable, no puede quedarse con su nombre.

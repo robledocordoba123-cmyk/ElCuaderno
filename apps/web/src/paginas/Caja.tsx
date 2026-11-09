@@ -1,7 +1,7 @@
 // Caja del día (solo la dueña): cuánto entró por cada medio, la ganancia y las ventas.
 import { anulacionSchema, formatearPesos, type ResumenCaja, type Venta } from '@elcuaderno/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, ScrollText, Smartphone, TrendingUp, Undo2, Wallet } from 'lucide-react';
+import { Banknote, BookOpen, ChevronLeft, ChevronRight, HandCoins, ScrollText, Smartphone, TrendingUp, Undo2, Wallet, BarChart3 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { api, ErrorApi } from '../api/cliente';
@@ -37,12 +37,20 @@ export function Caja() {
         titulo="Caja del día"
         detalle={nombreDia(dia)}
         accion={
-          <Link
-            to="/bitacora"
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-200/60"
-          >
-            <ScrollText size={16} /> Bitácora
-          </Link>
+          <div className="flex flex-wrap justify-end gap-1">
+            <Link
+              to="/reportes"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-200/60"
+            >
+              <BarChart3 size={16} /> Reportes
+            </Link>
+            <Link
+              to="/bitacora"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold text-stone-700 hover:bg-stone-200/60"
+            >
+              <ScrollText size={16} /> Bitácora
+            </Link>
+          </div>
         }
       />
       <div className="mb-5 flex items-center gap-2">

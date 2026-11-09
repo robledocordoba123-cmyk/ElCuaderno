@@ -10,6 +10,7 @@ import { Caja } from './paginas/Caja';
 import { Fiados } from './paginas/Fiados';
 import { Inventario } from './paginas/Inventario';
 import { Privacidad } from './paginas/Privacidad';
+import { Reportes } from './paginas/Reportes';
 import { Vender } from './paginas/Vender';
 import { ProveedorSesion, useSesion } from './sesion';
 
@@ -32,6 +33,7 @@ function Rutas() {
           <Route path="fiados" element={<Fiados />} />
           {esDueno && <Route path="caja" element={<Caja />} />}
           {esDueno && <Route path="bitacora" element={<Bitacora />} />}
+          {esDueno && <Route path="reportes" element={<Reportes />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       )}

@@ -40,7 +40,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (63 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (67 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```
@@ -71,6 +71,7 @@ Todas las rutas van bajo `/api` y exigen la cookie de sesión (o `Authorization:
 | GET | `/ventas?dia=AAAA-MM-DD` | Todos | Ventas de un día (las anuladas vienen marcadas) |
 | POST | `/ventas/:id/anular` | Dueña | Anula una venta de hoy con motivo: devuelve las unidades y la saca de la caja y de la deuda |
 | GET | `/caja/resumen?dia=AAAA-MM-DD` | Dueña | Caja del día: medios, abonos, base, gastos, lo que debe haber en el cajón, ganancia, más vendidos y cierre |
+| GET | `/caja/reporte?desde=&hasta=` | Dueña | Reporte de un rango (máx. 92 días): totales, cada día y los 10 más vendidos |
 | PUT | `/caja/base` | Dueña | Base con que se abre el cajón hoy |
 | POST / DELETE | `/caja/gastos`, `/caja/gastos/:id` | Todos / Dueña | Anotar un gasto que sale del cajón / quitar uno mal anotado |
 | POST | `/caja/cierre?dia=` | Dueña | Cierre con lo contado: guarda lo esperado y la diferencia; después no se mueve nada de ese día |

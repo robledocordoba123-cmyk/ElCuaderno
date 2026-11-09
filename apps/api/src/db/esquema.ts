@@ -173,3 +173,23 @@ export const cierresCaja = pgTable(
   },
   (t) => [check('cierres_contado_valido', sql`${t.contado} >= 0`), uniqueIndex('cierres_uno_por_dia').on(t.tiendaId, t.dia)],
 );
+
+/** Historial de llegadas de mercancía: cuántas unidades, a qué costo y de qué proveedor. */
+export const entradasInventario = pgTable(
+  'entradas_inventario',
+  {
+    id: serial('id').primaryKey(),
+    tiendaId: integer('tienda_id').notNull().references(() => tiendas.id),
+    productoId: integer('producto_id').notNull().references(() => productos.id),
+    cantidad: integer('cantidad').notNull(),
+    costoUnitario: integer('costo_unitario').notNull(),
+    proveedor: text('proveedor'),
+    usuarioId: integer('usuario_id').notNull().references(() => usuarios.id),
+    creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check('entradas_cantidad_positiva', sql`${t.cantidad} > 0`),
+    check('entradas_costo_valido', sql`${t.costoUnitario} >= 0`),
+    index('entradas_producto_idx').on(t.productoId, t.creadoEn),
+  ],
+);

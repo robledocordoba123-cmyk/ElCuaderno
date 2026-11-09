@@ -6,7 +6,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { config } from '../config';
 import * as esquema from '../db/esquema';
-import { abonos, bitacora, cierresCaja, clientes, detallesVenta, movimientosCaja, productos, tiendas, usuarios, ventas } from '../db/esquema';
+import { abonos, bitacora, cierresCaja, clientes, detallesVenta, entradasInventario, movimientosCaja, productos, tiendas, usuarios, ventas } from '../db/esquema';
 import { diaLocal, limitesDelDia } from '../tiempo';
 
 export const DEMO = {
@@ -67,6 +67,7 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
       await tx.delete(ventas).where(inArray(ventas.tiendaId, ids));
       await tx.delete(abonos).where(inArray(abonos.tiendaId, ids));
       await tx.delete(clientes).where(inArray(clientes.tiendaId, ids));
+      await tx.delete(entradasInventario).where(inArray(entradasInventario.tiendaId, ids));
       await tx.delete(productos).where(inArray(productos.tiendaId, ids));
       // La bitácora es inmutable; solo esta recarga, dentro de su transacción, puede vaciarla.
       await tx.execute(sql`SELECT set_config('elcuaderno.recargar_demo', 'si', true)`);

@@ -37,11 +37,25 @@ export const productoSchema = z
   });
 export type ProductoDto = z.infer<typeof productoSchema>;
 
-/** Entrada de mercancía: suma unidades al stock. */
+/**
+ * Llegada de mercancía: suma unidades al stock y guarda a cuánto se compraron.
+ * Si no se dice el costo, se toma el costo actual del producto.
+ */
 export const entradaStockSchema = z.object({
   cantidad: z.number().int().positive('La cantidad debe ser mayor que cero').max(100000),
+  costoUnitario: pesos.optional(),
+  proveedor: z.string().trim().max(60, 'El nombre del proveedor es demasiado largo').optional(),
 });
 export type EntradaStockDto = z.infer<typeof entradaStockSchema>;
+
+export interface EntradaInventario {
+  id: number;
+  cantidad: number;
+  costoUnitario: number;
+  proveedor: string | null;
+  usuario: string;
+  fecha: string;
+}
 
 export const clienteSchema = z.object({
   nombre: texto(2, 80, 'El nombre'),

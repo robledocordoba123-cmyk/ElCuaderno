@@ -62,8 +62,8 @@ describe('Reporte por rango de días', () => {
     const porDia = Object.fromEntries(res.body.dias.map((d: { dia: string; vendido: number }) => [d.dia, d.vendido]));
     expect(porDia).toMatchObject({ [haceDias(3)]: 6000, [haceDias(2)]: 0, [haceDias(1)]: 4000, [haceDias(0)]: 3000 });
     expect(res.body.masVendidos).toEqual([
-      { producto: 'Arroz', unidades: 3, vendido: 9000 },
-      { producto: 'Panela', unidades: 1, vendido: 4000 },
+      { producto: 'Arroz', unidades: 3, porPeso: false, vendido: 9000 },
+      { producto: 'Panela', unidades: 1, porPeso: false, vendido: 4000 },
     ]);
   });
 

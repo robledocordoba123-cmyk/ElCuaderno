@@ -2,7 +2,7 @@ import { CallHandler, Controller, ExecutionContext, Get, Global, Injectable, Mod
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { desc, eq } from 'drizzle-orm';
 import { mergeMap, type Observable } from 'rxjs';
-import { formatearPesos, type RegistroBitacora } from '@elcuaderno/shared';
+import { formatearCantidad, formatearPesos, type RegistroBitacora } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
 import { bitacora } from '../db/esquema';
@@ -49,10 +49,10 @@ const num = (p: Peticion, nombre = 'id') => `#${p.params[nombre]}`;
 /** Acciones que se anotan: método + ruta → texto para la dueña y detalle opcional. */
 const ACCIONES: Record<string, [string, Describir?]> = {
   'POST /api/productos': ['Creó un producto', (_, r) => String(r.nombre)],
-  'PUT /api/productos/:id': ['Editó un producto', (_, r) => `${r.nombre} · ${formatearPesos(Number(r.precio))}`],
+  'PUT /api/productos/:id': ['Editó un producto', (_, r) => `${r.nombre} · ${formatearPesos(Number(r.precio))}${r.porPeso ? ' el kilo' : ''}`],
   'PATCH /api/productos/:id/entrada': [
     'Registró llegada de mercancía',
-    (p, r) => `${r.nombre}: +${p.body.cantidad} und.${p.body.costoUnitario !== undefined ? ` a ${formatearPesos(Number(p.body.costoUnitario))} c/u` : ''}${p.body.proveedor ? ` · ${p.body.proveedor}` : ''}`,
+    (p, r) => `${r.nombre}: +${formatearCantidad(Number(p.body.cantidad), Boolean(r.porPeso))}${p.body.costoUnitario !== undefined ? ` a ${formatearPesos(Number(p.body.costoUnitario))} ${r.porPeso ? 'el kilo' : 'c/u'}` : ''}${p.body.proveedor ? ` · ${p.body.proveedor}` : ''}`,
   ],
   'DELETE /api/productos/:id': ['Quitó un producto', (p) => `Producto ${num(p)}`],
   // De los vecinos solo se anota el número, nunca el nombre: si piden borrar sus datos

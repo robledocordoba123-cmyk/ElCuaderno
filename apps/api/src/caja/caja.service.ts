@@ -25,6 +25,7 @@ export class CajaService {
     // Las ventas anuladas no cuentan: ni en la caja, ni en la ganancia, ni en lo más vendido.
     const delDia = and(eq(ventas.tiendaId, tiendaId), gte(ventas.creadaEn, desde), lt(ventas.creadaEn, hasta), isNull(ventas.anuladaEn));
     const unidades = sql<number>`sum(${detallesVenta.cantidad})::int`;
+    const vendido = sql<number>`sum(${detallesVenta.subtotal})::int`;
     const movimientosDelDia = and(eq(movimientosCaja.tiendaId, tiendaId), eq(movimientosCaja.dia, dia));
 
     const [porMedioFilas, [abonado], [ganancia], masVendidos, movimientos, [cierre]] = await Promise.all([
@@ -43,19 +44,19 @@ export class CajaService {
         .where(and(eq(abonos.tiendaId, tiendaId), gte(abonos.creadoEn, desde), lt(abonos.creadoEn, hasta))),
       this.db
         .select({
-          total: sql<number>`coalesce(sum((${detallesVenta.precioUnitario} - ${detallesVenta.costoUnitario}) * ${detallesVenta.cantidad}), 0)::int`,
+          total: sql<number>`coalesce(sum(${detallesVenta.subtotal} - ${detallesVenta.costoTotal}), 0)::int`,
         })
         .from(detallesVenta)
         .innerJoin(ventas, eq(ventas.id, detallesVenta.ventaId))
         .where(delDia),
       this.db
-        .select({ producto: productos.nombre, unidades })
+        .select({ producto: productos.nombre, porPeso: productos.porPeso, unidades })
         .from(detallesVenta)
         .innerJoin(ventas, eq(ventas.id, detallesVenta.ventaId))
         .innerJoin(productos, eq(productos.id, detallesVenta.productoId))
         .where(delDia)
-        .groupBy(productos.nombre)
-        .orderBy(desc(unidades))
+        .groupBy(productos.nombre, productos.porPeso)
+        .orderBy(desc(vendido))
         .limit(5),
       this.db
         .select({
@@ -107,7 +108,7 @@ export class CajaService {
       gastos,
       enCaja,
       ganancia: Number(ganancia.total),
-      masVendidos: masVendidos.map((m) => ({ producto: m.producto, unidades: Number(m.unidades) })),
+      masVendidos: masVendidos.map((m) => ({ producto: m.producto, unidades: Number(m.unidades), porPeso: m.porPeso })),
       listaGastos,
       cierre: cierre
         ? {
@@ -135,8 +136,9 @@ export class CajaService {
     // vería distintas la expresión del SELECT y la del GROUP BY. Se valida antes de usarla.
     if (!/^[A-Za-z_]+(\/[A-Za-z_]+)*$/.test(config.zonaHoraria)) throw new Error('ZONA_HORARIA no es válida');
     const diaDeVenta = sql<string>`to_char(${ventas.creadaEn} at time zone '${sql.raw(config.zonaHoraria)}', 'YYYY-MM-DD')`;
-    const gananciaExpr = sql<number>`coalesce(sum((${detallesVenta.precioUnitario} - ${detallesVenta.costoUnitario}) * ${detallesVenta.cantidad}), 0)::int`;
+    const gananciaExpr = sql<number>`coalesce(sum(${detallesVenta.subtotal} - ${detallesVenta.costoTotal}), 0)::int`;
     const unidades = sql<number>`sum(${detallesVenta.cantidad})::int`;
+    const vendido = sql<number>`sum(${detallesVenta.subtotal})::int`;
 
     const [porDiaYMedio, gananciaPorDia, masVendidos, [abonado], [gastado]] = await Promise.all([
       this.db
@@ -158,15 +160,16 @@ export class CajaService {
       this.db
         .select({
           producto: productos.nombre,
+          porPeso: productos.porPeso,
           unidades,
-          vendido: sql<number>`sum(${detallesVenta.precioUnitario} * ${detallesVenta.cantidad})::int`,
+          vendido,
         })
         .from(detallesVenta)
         .innerJoin(ventas, eq(ventas.id, detallesVenta.ventaId))
         .innerJoin(productos, eq(productos.id, detallesVenta.productoId))
         .where(delRango)
-        .groupBy(productos.nombre)
-        .orderBy(desc(unidades))
+        .groupBy(productos.nombre, productos.porPeso)
+        .orderBy(desc(vendido))
         .limit(10),
       this.db
         .select({ total: sql<number>`coalesce(sum(${abonos.monto}), 0)::int` })
@@ -218,7 +221,7 @@ export class CajaService {
         gastos: Number(gastado.total),
       },
       dias: lista,
-      masVendidos: masVendidos.map((m) => ({ producto: m.producto, unidades: Number(m.unidades), vendido: Number(m.vendido) })),
+      masVendidos: masVendidos.map((m) => ({ producto: m.producto, unidades: Number(m.unidades), porPeso: m.porPeso, vendido: Number(m.vendido) })),
     };
   }
 

@@ -1,9 +1,19 @@
 // Pantalla principal del mostrador: tocar productos para agregarlos, escoger cómo paga y cobrar.
-import { formatearPesos, ventaSchema, type Cliente, type MedioDePago, type Producto, type Venta } from '@elcuaderno/shared';
+import {
+  formatearCantidad,
+  formatearPesos,
+  subtotalLinea,
+  ventaSchema,
+  type Cliente,
+  type MedioDePago,
+  type Producto,
+  type Venta,
+} from '@elcuaderno/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Minus, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react';
+import { Minus, Pencil, Plus, Scale, Search, ShoppingCart, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { api, ErrorApi } from '../api/cliente';
+import { Bascula } from '../componentes/Bascula';
 import { Aviso, Boton, Cargando, Encabezado } from '../componentes/ui';
 import { useSesion } from '../sesion';
 
@@ -22,6 +32,8 @@ export function Vender() {
   const [clienteId, setClienteId] = useState<number | undefined>();
   const [error, setError] = useState('');
   const [ultimaVenta, setUltimaVenta] = useState<Venta | null>(null);
+  // Producto por peso que se está pesando en la báscula.
+  const [pesando, setPesando] = useState<Producto | null>(null);
 
   const productos = useQuery({ queryKey: ['productos'], queryFn: () => api<Producto[]>('/productos') });
   const clientes = useQuery({ queryKey: ['clientes'], queryFn: () => api<Cliente[]>('/clientes'), enabled: medio === 'FIADO' });
@@ -32,7 +44,8 @@ export function Vender() {
   }, [productos.data, busqueda]);
 
   const lineas = [...carrito].map(([id, cantidad]) => ({ producto: productos.data?.find((p) => p.id === id)!, cantidad })).filter((l) => l.producto);
-  const total = lineas.reduce((s, l) => s + l.producto.precio * l.cantidad, 0);
+  // Mismo cálculo que hace el servidor (por peso, redondeado a 50 pesos).
+  const total = lineas.reduce((s, l) => s + subtotalLinea(l.producto.precio, l.cantidad, l.producto.porPeso), 0);
   const cliente = clientes.data?.find((c) => c.id === clienteId);
 
   const cambiar = (id: number, delta: number) => {
@@ -43,6 +56,17 @@ export function Vender() {
       const stock = productos.data?.find((p) => p.id === id)?.stock ?? 0;
       if (cantidad <= 0) nuevo.delete(id);
       else nuevo.set(id, Math.min(cantidad, stock));
+      return nuevo;
+    });
+  };
+
+  /** Pone los gramos exactos de un producto por peso (0 lo quita). */
+  const fijar = (id: number, gramos: number) => {
+    setUltimaVenta(null);
+    setCarrito((actual) => {
+      const nuevo = new Map(actual);
+      if (gramos <= 0) nuevo.delete(id);
+      else nuevo.set(id, gramos);
       return nuevo;
     });
   };
@@ -63,7 +87,11 @@ export function Vender() {
 
   function alCobrar() {
     setError('');
-    const venta = { medio, clienteId: medio === 'FIADO' ? clienteId : undefined, items: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad })) };
+    const venta = {
+      medio,
+      clienteId: medio === 'FIADO' ? clienteId : undefined,
+      items: lineas.map((l) => ({ productoId: l.producto.id, cantidad: l.cantidad })),
+    };
     const validacion = ventaSchema.safeParse(venta);
     if (!validacion.success) {
       setError(validacion.error.issues[0].message);
@@ -104,8 +132,8 @@ export function Vender() {
                 <li key={p.id}>
                   {/* Cada producto es una etiqueta de precio, con su huequito para colgarla. */}
                   <button
-                    onClick={() => cambiar(p.id, 1)}
-                    disabled={agotado || enCarrito >= p.stock}
+                    onClick={() => (p.porPeso ? setPesando(p) : cambiar(p.id, 1))}
+                    disabled={agotado || (!p.porPeso && enCarrito >= p.stock)}
                     className={`relative flex h-full w-full flex-col rounded-lg border-2 p-3 pt-4 text-left transition active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50 ${
                       enCarrito ? 'border-stone-900 bg-amber-200 sombra-tinta' : 'border-stone-300 bg-stone-50 sombra-papel hover:border-stone-900'
                     }`}
@@ -113,13 +141,17 @@ export function Vender() {
                     <span className="absolute left-3 top-2 h-1.5 w-1.5 rounded-full border border-stone-400 bg-stone-100" aria-hidden />
                     {enCarrito > 0 && (
                       <span className="absolute -right-2 -top-2 grid h-7 min-w-7 place-items-center rounded-full border-2 border-stone-900 bg-stone-900 px-1.5 font-mono text-xs font-bold text-amber-300">
-                        {enCarrito}
+                        {p.porPeso ? formatearCantidad(enCarrito, true) : enCarrito}
                       </span>
                     )}
                     <span className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-stone-800">{p.nombre}</span>
-                    <span className="mt-auto pt-2 font-mono text-lg font-bold tracking-tight text-stone-900">{formatearPesos(p.precio)}</span>
+                    <span className="mt-auto pt-2 font-mono text-lg font-bold tracking-tight text-stone-900">
+                      {formatearPesos(p.precio)}
+                      {p.porPeso && <span className="text-xs font-semibold text-stone-500"> /kg</span>}
+                    </span>
                     <span className={`text-xs ${p.bajoStock ? 'font-semibold text-margen' : 'text-stone-500'}`}>
-                      {agotado ? 'Agotado' : `Quedan ${p.stock}`}
+                      {agotado ? 'Agotado' : `Quedan ${p.porPeso ? formatearCantidad(p.stock, true) : p.stock}`}
+                      {p.porPeso && !agotado && <Scale size={11} className="ml-1 inline align-[-1px]" aria-label="Se vende por peso" />}
                     </span>
                   </button>
                 </li>
@@ -159,23 +191,46 @@ export function Vender() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13px] font-medium">{producto.nombre}</p>
                       <p className="text-xs text-stone-500">
-                        {cantidad} x {formatearPesos(producto.precio)}
+                        {producto.porPeso
+                          ? `${formatearCantidad(cantidad, true)} a ${formatearPesos(producto.precio)}/kg`
+                          : `${cantidad} x ${formatearPesos(producto.precio)}`}
                       </p>
                     </div>
-                    <span className="text-right text-[13px] font-bold">{formatearPesos(producto.precio * cantidad)}</span>
-                    <div className="flex items-center rounded-md border border-stone-300">
-                      <button onClick={() => cambiar(producto.id, -1)} className="p-1.5 hover:bg-stone-100" aria-label={`Quitar uno de ${producto.nombre}`}>
-                        {cantidad === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
-                      </button>
-                      <button
-                        onClick={() => cambiar(producto.id, 1)}
-                        disabled={cantidad >= producto.stock}
-                        className="border-l border-stone-300 p-1.5 hover:bg-stone-100 disabled:opacity-40"
-                        aria-label={`Agregar uno de ${producto.nombre}`}
-                      >
-                        <Plus size={13} />
-                      </button>
-                    </div>
+                    <span className="text-right text-[13px] font-bold">
+                      {formatearPesos(subtotalLinea(producto.precio, cantidad, producto.porPeso))}
+                    </span>
+                    {producto.porPeso ? (
+                      <div className="flex items-center rounded-md border border-stone-300">
+                        <button onClick={() => fijar(producto.id, 0)} className="p-1.5 hover:bg-stone-100" aria-label={`Quitar ${producto.nombre}`}>
+                          <Trash2 size={13} />
+                        </button>
+                        <button
+                          onClick={() => setPesando(producto)}
+                          className="border-l border-stone-300 p-1.5 hover:bg-stone-100"
+                          aria-label={`Cambiar el peso de ${producto.nombre}`}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center rounded-md border border-stone-300">
+                        <button
+                          onClick={() => cambiar(producto.id, -1)}
+                          className="p-1.5 hover:bg-stone-100"
+                          aria-label={`Quitar uno de ${producto.nombre}`}
+                        >
+                          {cantidad === 1 ? <Trash2 size={13} /> : <Minus size={13} />}
+                        </button>
+                        <button
+                          onClick={() => cambiar(producto.id, 1)}
+                          disabled={cantidad >= producto.stock}
+                          className="border-l border-stone-300 p-1.5 hover:bg-stone-100 disabled:opacity-40"
+                          aria-label={`Agregar uno de ${producto.nombre}`}
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -234,6 +289,18 @@ export function Vender() {
         </div>
       </aside>
 
+      {pesando && (
+        <Bascula
+          producto={pesando}
+          inicial={carrito.get(pesando.id) ?? 0}
+          alCerrar={() => setPesando(null)}
+          alListo={(gramos) => {
+            fijar(pesando.id, gramos);
+            setPesando(null);
+          }}
+        />
+      )}
+
       {/* En el celular el carrito queda abajo: esta barra lleva a él con un toque. */}
       {lineas.length > 0 && (
         <a
@@ -241,7 +308,7 @@ export function Vender() {
           className="fixed inset-x-4 bottom-20 z-20 flex items-center justify-between rounded-lg border-2 border-stone-900 bg-amber-400 px-4 py-3 text-stone-900 sombra-tinta lg:hidden"
         >
           <span className="flex items-center gap-2 text-sm font-semibold">
-            <ShoppingCart size={18} /> {lineas.reduce((s, l) => s + l.cantidad, 0)} productos
+            <ShoppingCart size={18} /> {lineas.reduce((s, l) => s + (l.producto.porPeso ? 1 : l.cantidad), 0)} productos
           </span>
           <span className="font-mono font-bold">{formatearPesos(total)} · Ver venta</span>
         </a>

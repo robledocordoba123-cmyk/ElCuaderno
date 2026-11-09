@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { and, asc, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import type { AnulacionDto, Venta, VentaDto } from '@elcuaderno/shared';
+import { formatearCantidad, subtotalLinea, type AnulacionDto, type Venta, type VentaDto } from '@elcuaderno/shared';
 import { CajaService } from '../caja/caja.service';
 import { NoEncontrado, ReglaDeNegocio } from '../comun/errores';
 import { BaseDeDatos, InjectDb } from '../db/db.module';
@@ -35,7 +35,15 @@ export class VentasService {
       const porId = new Map(encontrados.map((p) => [p.id, p]));
 
       // RN-04: el total sale de los precios guardados, nunca de lo que mande el navegador.
-      const total = items.reduce((suma, i) => suma + porId.get(i.productoId)!.precio * i.cantidad, 0);
+      // Cada línea se calcula una vez (por peso, redondeada a 50 pesos) y se guarda así.
+      const lineas = items.map((i) => {
+        const p = porId.get(i.productoId)!;
+        if (!p.porPeso && i.cantidad > 999) throw new ReglaDeNegocio(`No se pueden vender más de 999 unidades de ${p.nombre}`);
+        const subtotal = subtotalLinea(p.precio, i.cantidad, p.porPeso);
+        if (p.porPeso && subtotal === 0) throw new ReglaDeNegocio(`Es muy poquito ${p.nombre}: no alcanza ni a 50 pesos`);
+        return { ...i, producto: p, subtotal, costoTotal: p.porPeso ? Math.round((p.costo * i.cantidad) / 1000) : p.costo * i.cantidad };
+      });
+      const total = lineas.reduce((suma, l) => suma + l.subtotal, 0);
 
       let clienteId: number | null = null;
       if (datos.medio === 'FIADO') {
@@ -68,8 +76,8 @@ export class VentasService {
             .select({ stock: productos.stock })
             .from(productos)
             .where(eq(productos.id, item.productoId));
-          const nombre = porId.get(item.productoId)!.nombre;
-          throw new ReglaDeNegocio(`No hay suficiente ${nombre}: quedan ${stock}`);
+          const p = porId.get(item.productoId)!;
+          throw new ReglaDeNegocio(`No hay suficiente ${p.nombre}: quedan ${formatearCantidad(stock, p.porPeso)}`);
         }
       }
 
@@ -78,16 +86,15 @@ export class VentasService {
         .values({ tiendaId, usuarioId, clienteId, medio: datos.medio, total })
         .returning({ id: ventas.id });
       await tx.insert(detallesVenta).values(
-        items.map((i) => {
-          const p = porId.get(i.productoId)!;
-          return {
-            ventaId: venta.id,
-            productoId: p.id,
-            cantidad: i.cantidad,
-            precioUnitario: p.precio,
-            costoUnitario: p.costo,
-          };
-        }),
+        lineas.map((l) => ({
+          ventaId: venta.id,
+          productoId: l.producto.id,
+          cantidad: l.cantidad,
+          precioUnitario: l.producto.precio,
+          costoUnitario: l.producto.costo,
+          subtotal: l.subtotal,
+          costoTotal: l.costoTotal,
+        })),
       );
       return venta.id;
     });
@@ -183,6 +190,8 @@ export class VentasService {
         producto: productos.nombre,
         cantidad: detallesVenta.cantidad,
         precioUnitario: detallesVenta.precioUnitario,
+        subtotal: detallesVenta.subtotal,
+        porPeso: productos.porPeso,
       })
       .from(detallesVenta)
       .innerJoin(productos, eq(productos.id, detallesVenta.productoId))
@@ -200,7 +209,7 @@ export class VentasService {
       anulada: anuladaEn ? { en: anuladaEn.toISOString(), por: anuladaPor ?? '', motivo: motivo ?? '' } : null,
       items: detalles
         .filter((d) => d.ventaId === c.id)
-        .map((d) => ({ producto: d.producto, cantidad: d.cantidad, precioUnitario: d.precioUnitario })),
+        .map(({ ventaId: _, ...d }) => d),
     }));
   }
 }

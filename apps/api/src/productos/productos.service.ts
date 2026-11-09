@@ -14,6 +14,7 @@ const aRespuesta = (p: FilaProducto): Producto => ({
   costo: p.costo,
   stock: p.stock,
   stockMinimo: p.stockMinimo,
+  porPeso: p.porPeso,
   activo: p.activo,
   bajoStock: p.stock <= p.stockMinimo,
 });
@@ -37,6 +38,15 @@ export class ProductosService {
   }
 
   async actualizar(tiendaId: number, id: number, datos: ProductoDto) {
+    // Pasar de unidades a gramos (o al revés) cambiaría el sentido del stock y de las ventas viejas.
+    const [actual] = await this.db
+      .select({ porPeso: productos.porPeso })
+      .from(productos)
+      .where(and(eq(productos.id, id), eq(productos.tiendaId, tiendaId)));
+    if (!actual) throw new NoEncontrado('El producto');
+    if (actual.porPeso !== datos.porPeso) {
+      throw new ReglaDeNegocio('No se puede cambiar si un producto se vende por unidad o por peso: crea uno nuevo');
+    }
     const [fila] = await this.db
       .update(productos)
       .set(datos)

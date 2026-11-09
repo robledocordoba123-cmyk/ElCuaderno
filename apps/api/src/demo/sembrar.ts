@@ -1,3 +1,4 @@
+import { subtotalLinea } from '@elcuaderno/shared';
 // Datos de demostración: "Tienda Doña Rosa" con productos, vecinos que fían y una semana de ventas.
 // Se puede ejecutar muchas veces: borra y recrea solo la tienda de demo.
 import { hashSync } from 'bcryptjs';
@@ -33,7 +34,13 @@ const PRODUCTOS = [
   { nombre: 'Jabón Rey', precio: 3500, costo: 2700, stock: 20, stockMinimo: 6 },
   { nombre: 'Cerveza Águila lata', precio: 3300, costo: 2500, stock: 60, stockMinimo: 24 },
   { nombre: 'Agua Cristal 600 ml', precio: 2000, costo: 1300, stock: 2, stockMinimo: 10 },
+  // A granel: precio y costo por kilo; stock y mínimo en gramos.
+  { nombre: 'Queso campesino', precio: 24000, costo: 19000, stock: 3500, stockMinimo: 1000, porPeso: true },
+  { nombre: 'Arroz suelto', precio: 4800, costo: 3900, stock: 12000, stockMinimo: 3000, porPeso: true },
+  { nombre: 'Fríjol cargamanto', precio: 12000, costo: 9800, stock: 800, stockMinimo: 1000, porPeso: true },
 ];
+/** Lo que más se pide a granel en la tienda: cuarto, media libra, libra y kilo. */
+const PESOS_COMUNES = [125, 250, 500, 1000];
 
 const CLIENTES = [
   { nombre: 'Don Jairo', telefono: '3104567890', cupo: 150000 },
@@ -113,13 +120,21 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
         const items = new Map<number, number>();
         for (let k = 0, lineas = entre(1, 4); k < lineas; k++) {
           const p = listaProductos[entre(0, listaProductos.length - 1)];
-          items.set(p.id, (items.get(p.id) ?? 0) + entre(1, 3));
+          if (items.has(p.id)) continue;
+          items.set(p.id, p.porPeso ? PESOS_COMUNES[entre(0, PESOS_COMUNES.length - 1)] : entre(1, 3));
         }
         const detalles = [...items].map(([id, cant]) => {
           const p = listaProductos.find((x) => x.id === id)!;
-          return { productoId: id, cantidad: cant, precioUnitario: p.precio, costoUnitario: p.costo };
+          return {
+            productoId: id,
+            cantidad: cant,
+            precioUnitario: p.precio,
+            costoUnitario: p.costo,
+            subtotal: subtotalLinea(p.precio, cant, p.porPeso),
+            costoTotal: p.porPeso ? Math.round((p.costo * cant) / 1000) : p.costo * cant,
+          };
         });
-        const total = detalles.reduce((s, d) => s + d.precioUnitario * d.cantidad, 0);
+        const total = detalles.reduce((s, d) => s + d.subtotal, 0);
 
         const dado = azar();
         let medio: 'EFECTIVO' | 'NEQUI' | 'FIADO' = dado < 0.55 ? 'EFECTIVO' : dado < 0.8 ? 'NEQUI' : 'FIADO';

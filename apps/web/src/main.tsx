@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { Marco } from './componentes/Marco';
+import { Tropiezo } from './componentes/Tropiezo';
 import './estilos.css';
 import { Acceso } from './paginas/Acceso';
 import { Bitacora } from './paginas/Bitacora';
@@ -52,7 +53,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ProveedorSesion>
-          <Rutas />
+          <Tropiezo>
+            <Rutas />
+          </Tropiezo>
         </ProveedorSesion>
       </BrowserRouter>
     </QueryClientProvider>

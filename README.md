@@ -41,7 +41,8 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (86 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (90), Vitest para la lógica compartida (12) y Playwright de punta a punta en escritorio y celular (10) |
+| Calidad | ESLint (typescript-eslint + reglas de React) y Dependabot semanal |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```
@@ -60,6 +61,10 @@ Todas las rutas van bajo `/api` y exigen la cookie de sesión (o `Authorization:
 |---|---|---|---|
 | POST | `/auth/login` | Público | Inicia sesión y deja la cookie `httpOnly` (5 intentos fallidos por correo y se bloquea 15 min) |
 | GET / POST | `/auth/yo`, `/auth/salir` | Todos | Confirma la sesión / la cierra borrando la cookie |
+| POST | `/auth/registro` | Público | Registra una tienda con su dueña y abre la sesión (acepta la política de datos; máx. 20 por hora) |
+| PUT | `/auth/clave` | Todos | Cambia la propia contraseña y cierra las otras sesiones |
+| GET / POST | `/usuarios` | Dueña | Equipo de la tienda / crear cajero (máx. 10 activos) |
+| PATCH / POST | `/usuarios/:id/estado`, `/usuarios/:id/clave` | Dueña | Desactivar o reactivar un cajero (le cierra la sesión) / ponerle contraseña temporal |
 | GET | `/productos?q=&bajoStock=true` | Todos | Productos con alerta de stock bajo |
 | POST / PUT / DELETE | `/productos`, `/productos/:id` | Dueña | Crear, editar, desactivar |
 | PATCH | `/productos/:id/entrada` | Dueña | Llegó mercancía: suma unidades, guarda costo y proveedor, y actualiza el costo con el promedio ponderado |
@@ -97,10 +102,14 @@ npm run dev:web                      # http://localhost:5174
 
 ```bash
 docker exec elcuaderno_db psql -U elcuaderno -c "CREATE DATABASE elcuaderno_test"   # solo la primera vez
-npm test
+docker exec elcuaderno_db psql -U elcuaderno -c "CREATE DATABASE elcuaderno_e2e"    # solo la primera vez
+npm run lint        # ESLint en todo el monorepo
+npm run test:unit   # Vitest: cálculos de báscula, redondeo a $50 y esquemas
+npm test            # Jest: la API contra PostgreSQL
+npm run e2e         # Playwright: compila primero (npm run build) y prueba en escritorio y celular
 ```
 
-Levantan la aplicación completa y hablan con un PostgreSQL real: autenticación y roles, validaciones compartidas, ventas atómicas, concurrencia sobre la última unidad, cupo de fiado, abonos simultáneos, límite de intentos, cookie de sesión, bitácora inmutable, autorización y supresión de datos, aislamiento entre tiendas y el cierre de caja en hora de Colombia.
+Levantan la aplicación completa y hablan con un PostgreSQL real: autenticación y roles, validaciones compartidas, ventas atómicas, concurrencia sobre la última unidad, cupo de fiado, abonos simultáneos, límite de intentos, cookie de sesión, bitácora inmutable, autorización y supresión de datos, aislamiento entre tiendas el cierre de caja en hora de Colombia, el equipo de la tienda y que ninguna dirección rara (JSON mal escrito, ids enormes, fechas imposibles) haga caer el servidor. Las de Playwright recorren la app como una persona: entrar con las notas adhesivas, vender, registrar una tienda, crear un cajero y desactivarlo.
 
 ## Despliegue
 

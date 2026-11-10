@@ -1,10 +1,12 @@
 // Estructura de la app: barra superior de tinta con pestañas en computador y barra inferior en el celular.
 import { BookOpen, Calculator, LogOut, Package, ShoppingCart, UserRound, Users } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
+import { Tropiezo } from './Tropiezo';
 import { useSesion } from '../sesion';
 
 export function Marco() {
   const { sesion, esDueno, salir } = useSesion();
+  const { pathname } = useLocation();
   const enlaces = [
     { a: '/', texto: 'Vender', icono: ShoppingCart },
     { a: '/inventario', texto: 'Inventario', icono: Package },
@@ -60,7 +62,10 @@ export function Marco() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-40 pt-6 md:px-8 md:pb-12 md:pt-8">
-        <Outlet />
+        {/* Si una pantalla falla, la barra sigue: cambiar de pestaña la vuelve a intentar. */}
+        <Tropiezo key={pathname}>
+          <Outlet />
+        </Tropiezo>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t-2 border-stone-900 bg-stone-50 pb-[env(safe-area-inset-bottom)] md:hidden">

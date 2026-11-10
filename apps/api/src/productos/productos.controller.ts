@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Patch, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { IdPipe } from '../comun/id.pipe';
 import { entradaStockSchema, productoSchema, type EntradaStockDto, type ProductoDto } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { ZodPipe } from '../comun/zod.pipe';
@@ -26,26 +27,26 @@ export class ProductosController {
 
   @Roles('DUENO')
   @Put(':id')
-  actualizar(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(productoSchema)) datos: ProductoDto) {
+  actualizar(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(productoSchema)) datos: ProductoDto) {
     return this.productos.actualizar(u.tiendaId, id, datos);
   }
 
   @Roles('DUENO')
   @Patch(':id/entrada')
-  entrada(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(entradaStockSchema)) datos: EntradaStockDto) {
+  entrada(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(entradaStockSchema)) datos: EntradaStockDto) {
     return this.productos.entrada(u.tiendaId, u.id, id, datos);
   }
 
   @Roles('DUENO')
   @Get(':id/entradas')
-  entradas(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+  entradas(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number) {
     return this.productos.entradas(u.tiendaId, id);
   }
 
   @Roles('DUENO')
   @Delete(':id')
   @HttpCode(200)
-  eliminar(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+  eliminar(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number) {
     return this.productos.eliminar(u.tiendaId, id);
   }
 }

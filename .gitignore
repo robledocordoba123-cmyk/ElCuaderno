@@ -5,3 +5,7 @@ dist/
 coverage/
 .vercel/
 *.tsbuildinfo
+
+# Pruebas de punta a punta
+playwright-report/
+test-results/

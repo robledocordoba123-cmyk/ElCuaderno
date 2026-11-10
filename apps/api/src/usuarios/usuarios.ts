@@ -1,6 +1,7 @@
 // Equipo de la tienda: la dueña crea cajeros, los desactiva cuando se van y les pone una
 // contraseña temporal si la olvidan. Nada se borra: las ventas siguen nombrando a quien las hizo.
-import { Body, Controller, ForbiddenException, Get, HttpCode, Injectable, Module, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, HttpCode, Injectable, Module, Param, Patch, Post } from '@nestjs/common';
+import { IdPipe } from '../comun/id.pipe';
 import { hash } from 'bcryptjs';
 import { and, asc, count, eq, sql } from 'drizzle-orm';
 import {
@@ -125,13 +126,13 @@ export class UsuariosController {
   }
 
   @Patch(':id/estado')
-  estado(@Usuario() quien: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(estadoUsuarioSchema)) datos: { activo: boolean }) {
+  estado(@Usuario() quien: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(estadoUsuarioSchema)) datos: { activo: boolean }) {
     return this.servicio.cambiarEstado(quien, id, datos.activo);
   }
 
   @Post(':id/clave')
   @HttpCode(204)
-  clave(@Usuario() quien: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(claveTemporalSchema)) datos: { password: string }) {
+  clave(@Usuario() quien: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(claveTemporalSchema)) datos: { password: string }) {
     return this.servicio.ponerClave(quien, id, datos.password);
   }
 }

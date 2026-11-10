@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { IdPipe } from '../comun/id.pipe';
 import {
   baseCajaSchema,
   cierreSchema,
@@ -56,7 +57,7 @@ export class CajaController {
 
   @Roles('DUENO')
   @Delete('gastos/:id')
-  quitarGasto(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+  quitarGasto(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number) {
     return this.caja.quitarGasto(u.tiendaId, id);
   }
 

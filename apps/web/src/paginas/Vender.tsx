@@ -43,7 +43,11 @@ export function Vender() {
     return (productos.data ?? []).filter((p) => !q || p.nombre.toLowerCase().includes(q));
   }, [productos.data, busqueda]);
 
-  const lineas = [...carrito].map(([id, cantidad]) => ({ producto: productos.data?.find((p) => p.id === id)!, cantidad })).filter((l) => l.producto);
+  // Si un producto del carrito ya no está en la lista (lo quitaron), su línea se descarta.
+  const lineas = [...carrito].flatMap(([id, cantidad]) => {
+    const producto = productos.data?.find((p) => p.id === id);
+    return producto ? [{ producto, cantidad }] : [];
+  });
   // Mismo cálculo que hace el servidor (por peso, redondeado a 50 pesos).
   const total = lineas.reduce((s, l) => s + subtotalLinea(l.producto.precio, l.cantidad, l.producto.porPeso), 0);
   const cliente = clientes.data?.find((c) => c.id === clienteId);

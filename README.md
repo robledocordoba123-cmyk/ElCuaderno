@@ -27,6 +27,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **La deuda no se guarda: se calcula** (fiados − abonos) con subconsultas en SQL, así nunca queda desincronizada.
 - **Dinero en pesos enteros** (`integer`), nunca `float`; el detalle de cada venta guarda el precio y el costo del momento, y "hoy" se calcula en hora de Colombia.
 - **Roles.** La dueña maneja precios, cupos y la caja; el cajero vende y recibe abonos. Una guarda global de NestJS exige el token en todas las rutas y revisa el rol con `@Roles('DUENO')`.
+- **Equipo y tiendas nuevas.** Cualquier tienda se registra sola y su dueña queda adentro de una vez. La dueña crea cajeros con una contraseña temporal, les pone otra si la olvidan y los desactiva cuando se van (no se borran: sus ventas siguen con su nombre). Cada usuario tiene una versión de sesión que sube al desactivarlo o cambiar la clave, y la guarda la revisa en cada petición, así que el token de un cajero que se fue deja de servir de inmediato y no a las 8 horas.
 - **Seguridad.** La sesión viaja en una cookie `httpOnly` y `SameSite=Strict` (JavaScript nunca ve el token), porque la web llama a `/api` en su mismo dominio y Vercel la reenvía a Render. El login se bloquea tras 5 intentos fallidos por correo, la API manda cabeceras de seguridad con `helmet` y la web tiene CSP propia en [`vercel.json`](apps/web/vercel.json).
 - **Bitácora inmutable.** Cada cambio que sale bien (venta, abono, precio, cliente) queda anotado con quién y cuándo. Un trigger de PostgreSQL impide editar o borrar filas ([`0001_seguridad_y_datos.sql`](apps/api/drizzle/0001_seguridad_y_datos.sql)).
 - **Datos de los vecinos (Ley 1581 de 2012).** No se guarda un cliente sin su autorización, hay [política de datos](https://elcuaderno-demo.vercel.app/privacidad) y la dueña puede borrar los datos de quien ya no debe: se eliminan nombre y celular, y sus compras pasadas quedan en la caja sin datos personales.
@@ -40,7 +41,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (74 pruebas) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (86 pruebas) |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 
 ```

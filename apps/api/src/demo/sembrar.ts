@@ -1,21 +1,18 @@
 import { subtotalLinea } from '@elcuaderno/shared';
 // Datos de demostración: "Tienda Doña Rosa" con productos, vecinos que fían y una semana de ventas.
-// Se puede ejecutar muchas veces: borra y recrea solo la tienda de demo.
+// Se puede ejecutar muchas veces: borra y recrea solo la tienda de demo. También borra las
+// tiendas que la gente registró para probar y que ya cumplieron DIAS_TIENDAS_DE_PRUEBA días.
 import { hashSync } from 'bcryptjs';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { inArray, lt, or, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import { config } from '../config';
 import * as esquema from '../db/esquema';
 import { abonos, bitacora, cierresCaja, clientes, detallesVenta, entradasInventario, movimientosCaja, productos, tiendas, usuarios, ventas } from '../db/esquema';
 import { diaLocal, limitesDelDia } from '../tiempo';
+import { DEMO, DIAS_TIENDAS_DE_PRUEBA } from './cuentas';
 
-export const DEMO = {
-  tienda: 'Tienda Doña Rosa',
-  dueno: { email: 'rosa@elcuaderno.co', nombre: 'Rosa (demo)' },
-  cajero: { email: 'cajero@elcuaderno.co', nombre: 'Santiago (demo)' },
-  password: 'Demo2026!',
-};
+export { DEMO };
 
 const PRODUCTOS = [
   { nombre: 'Arroz Diana 500 g', precio: 3200, costo: 2600, stock: 48, stockMinimo: 10 },
@@ -63,8 +60,18 @@ export async function sembrarDemo(db = drizzle(new Pool({ connectionString: conf
   const entre = (min: number, max: number) => min + Math.floor(azar() * (max - min + 1));
 
   await db.transaction(async (tx) => {
-    // Borra la tienda de demo anterior (y todo lo suyo) para empezar limpio.
-    const anteriores = await tx.select({ id: tiendas.id }).from(tiendas).where(eq(tiendas.nombre, DEMO.tienda));
+    // Borra la tienda de demo anterior (y todo lo suyo) para empezar limpio. Se reconoce por el
+    // correo de su dueña, no por el nombre: alguien puede registrar otra tienda llamada igual.
+    // De paso se van las tiendas de prueba que ya cumplieron su plazo.
+    const deLaDemo = tx
+      .select({ id: usuarios.tiendaId })
+      .from(usuarios)
+      .where(inArray(usuarios.email, [DEMO.dueno.email, DEMO.cajero.email]));
+    const vencidas = sql`now() - make_interval(days => ${DIAS_TIENDAS_DE_PRUEBA})`;
+    const anteriores = await tx
+      .select({ id: tiendas.id })
+      .from(tiendas)
+      .where(or(inArray(tiendas.id, deLaDemo), lt(tiendas.creadaEn, vencidas)));
     const ids = anteriores.map((t) => t.id);
     if (ids.length) {
       const ventasViejas = await tx.select({ id: ventas.id }).from(ventas).where(inArray(ventas.tiendaId, ids));

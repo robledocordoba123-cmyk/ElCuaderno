@@ -1,4 +1,4 @@
-import type { LoginDto, Sesion } from '@elcuaderno/shared';
+import type { LoginDto, RegistroDto, Sesion } from '@elcuaderno/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, cuandoVenzaLaSesion, guardarSesion, sesionGuardada } from './api/cliente';
@@ -7,6 +7,7 @@ interface ValorSesion {
   sesion: Sesion | null;
   esDueno: boolean;
   entrar: (datos: LoginDto) => Promise<void>;
+  registrar: (datos: RegistroDto) => Promise<void>;
   salir: () => void;
 }
 
@@ -47,9 +48,16 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     setSesion(nueva);
   }, []);
 
+  // Registrar una tienda también deja la sesión abierta (la API pone la cookie).
+  const registrar = useCallback(async (datos: RegistroDto) => {
+    const nueva = await api<Sesion>('/auth/registro', { metodo: 'POST', cuerpo: datos });
+    guardarSesion(nueva);
+    setSesion(nueva);
+  }, []);
+
   const valor = useMemo(
-    () => ({ sesion, esDueno: sesion?.usuario.rol === 'DUENO', entrar, salir }),
-    [sesion, entrar, salir],
+    () => ({ sesion, esDueno: sesion?.usuario.rol === 'DUENO', entrar, registrar, salir }),
+    [sesion, entrar, registrar, salir],
   );
   return <ContextoSesion.Provider value={valor}>{children}</ContextoSesion.Provider>;
 }

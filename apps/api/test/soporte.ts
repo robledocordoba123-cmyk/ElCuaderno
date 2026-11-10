@@ -9,7 +9,7 @@ import { BaseDeDatos, DB } from '../src/db/db.module';
 import { clientes, productos, tiendas, usuarios } from '../src/db/esquema';
 import { migrar } from '../src/db/migrar';
 import { configurar } from '../src/main';
-import { IntentosLogin } from '../src/auth/intentos';
+import { IntentosLogin, LimiteRegistros } from '../src/auth/intentos';
 
 const HASH = hashSync('Clave123!', 4); // Costo bajo: en pruebas importa la velocidad, no la seguridad.
 
@@ -37,6 +37,7 @@ export async function limpiar(db: BaseDeDatos) {
 export async function crearTienda(ctx: Contexto, nombre = 'Tienda de prueba') {
   // Los ids se reinician en cada prueba y los correos se repiten: se olvidan los intentos fallidos.
   ctx.app.get(IntentosLogin).reiniciar();
+  ctx.app.get(LimiteRegistros).reiniciar();
   const [tienda] = await ctx.db.insert(tiendas).values({ nombre }).returning();
   const sufijo = `${tienda.id}@prueba.co`;
   await ctx.db.insert(usuarios).values([

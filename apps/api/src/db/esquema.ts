@@ -9,6 +9,9 @@ export const movimientoCajaEnum = pgEnum('movimiento_caja', ['BASE', 'GASTO']);
 export const tiendas = pgTable('tiendas', {
   id: serial('id').primaryKey(),
   nombre: text('nombre').notNull(),
+  creadaEn: timestamp('creada_en', { withTimezone: true }).notNull().defaultNow(),
+  // Ley 1581: cuándo aceptó la dueña la política de datos al registrar la tienda.
+  politicaAceptadaEn: timestamp('politica_aceptada_en', { withTimezone: true }),
 });
 
 export const usuarios = pgTable(
@@ -20,6 +23,11 @@ export const usuarios = pgTable(
     email: text('email').notNull(),
     passwordHash: text('password_hash').notNull(),
     rol: rolEnum('rol').notNull(),
+    // Un cajero que se va no se borra (sus ventas lo nombran): se desactiva.
+    activo: boolean('activo').notNull().default(true),
+    // Sube al desactivar o cambiar la clave: los tokens viejos dejan de servir.
+    versionSesion: integer('version_sesion').notNull().default(1),
+    creadoEn: timestamp('creado_en', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('usuarios_email_uk').on(t.email)],
 );

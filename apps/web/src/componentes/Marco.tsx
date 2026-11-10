@@ -1,5 +1,5 @@
 // Estructura de la app: barra superior de tinta con pestañas en computador y barra inferior en el celular.
-import { BookOpen, Calculator, LogOut, Package, ShoppingCart } from 'lucide-react';
+import { BookOpen, Calculator, LogOut, Package, ShoppingCart, UserRound, Users } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 import { useSesion } from '../sesion';
 
@@ -10,6 +10,7 @@ export function Marco() {
     { a: '/inventario', texto: 'Inventario', icono: Package },
     { a: '/fiados', texto: 'Fiados', icono: BookOpen },
     ...(esDueno ? [{ a: '/caja', texto: 'Caja', icono: Calculator }] : []),
+    esDueno ? { a: '/cuenta', texto: 'Equipo', icono: Users } : { a: '/cuenta', texto: 'Mi cuenta', icono: UserRound },
   ];
 
   return (

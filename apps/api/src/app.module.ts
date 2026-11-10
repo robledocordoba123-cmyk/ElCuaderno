@@ -6,6 +6,7 @@ import { CajaModule } from './caja/caja.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { DbModule } from './db/db.module';
 import { ProductosModule } from './productos/productos.module';
+import { UsuariosModule } from './usuarios/usuarios';
 import { VentasModule } from './ventas/ventas.module';
 
 @Controller('salud')
@@ -19,7 +20,7 @@ class SaludController {
 }
 
 @Module({
-  imports: [DbModule, BitacoraModule, AuthModule, ProductosModule, ClientesModule, VentasModule, CajaModule],
+  imports: [DbModule, BitacoraModule, AuthModule, ProductosModule, ClientesModule, VentasModule, CajaModule, UsuariosModule],
   controllers: [SaludController],
 })
 export class AppModule {}

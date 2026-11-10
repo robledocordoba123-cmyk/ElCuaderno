@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { IdPipe } from '../comun/id.pipe';
 import { abonoSchema, clienteSchema, type AbonoDto, type ClienteDto } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { ZodPipe } from '../comun/zod.pipe';
@@ -14,7 +15,7 @@ export class ClientesController {
   }
 
   @Get(':id')
-  obtener(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+  obtener(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number) {
     return this.clientes.obtener(u.tiendaId, id);
   }
 
@@ -26,19 +27,19 @@ export class ClientesController {
 
   @Roles('DUENO')
   @Put(':id')
-  actualizar(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(clienteSchema)) datos: ClienteDto) {
+  actualizar(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(clienteSchema)) datos: ClienteDto) {
     return this.clientes.actualizar(u.tiendaId, id, datos);
   }
 
   @Roles('DUENO')
   @Post(':id/suprimir')
   @HttpCode(200)
-  suprimir(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number) {
+  suprimir(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number) {
     return this.clientes.suprimir(u.tiendaId, id);
   }
 
   @Post(':id/abonos')
-  abonar(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(abonoSchema)) datos: AbonoDto) {
+  abonar(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(abonoSchema)) datos: AbonoDto) {
     return this.clientes.abonar(u.tiendaId, u.id, id, datos);
   }
 }

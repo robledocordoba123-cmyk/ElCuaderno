@@ -1,0 +1,17 @@
+# Dependabot revisa cada semana si hay versiones nuevas de las dependencias y de las acciones de GitHub.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Las de desarrollo (pruebas, ESLint, tipos) llegan juntas en un solo PR.
+      desarrollo:
+        dependency-type: development
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,4 +1,5 @@
-# En cada push y Pull Request: pruebas de la API contra un PostgreSQL real y build del frontend.
+# En cada push y Pull Request: revisión del código (ESLint), pruebas unitarias, pruebas de la API
+# contra un PostgreSQL real, build del frontend y pruebas de punta a punta con Playwright.
 name: CI
 
 on:
@@ -6,6 +7,19 @@ on:
   pull_request:
 
 jobs:
+  calidad:
+    name: ESLint + pruebas unitarias
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:unit
+
   api:
     name: API (NestJS + PostgreSQL)
     runs-on: ubuntu-latest
@@ -47,3 +61,43 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build -w @elcuaderno/web
+
+  e2e:
+    name: Punta a punta (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: elcuaderno
+          POSTGRES_PASSWORD: elcuaderno_dev
+          POSTGRES_DB: elcuaderno_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U elcuaderno -d elcuaderno_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL_E2E: postgresql://elcuaderno:elcuaderno_dev@localhost:5432/elcuaderno_e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:shared
+      - run: npm run build -w @elcuaderno/api
+      - run: npm run build -w @elcuaderno/web
+        env:
+          VITE_MODO_DEMO: 'true'
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reporte-playwright
+          path: playwright-report/
+          retention-days: 7

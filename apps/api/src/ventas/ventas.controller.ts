@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import { IdPipe } from '../comun/id.pipe';
 import { anulacionSchema, ventaSchema, type AnulacionDto, type VentaDto } from '@elcuaderno/shared';
 import { Roles, Usuario, type UsuarioToken } from '../auth/decoradores';
 import { validarDia } from '../caja/validar-dia';
@@ -18,7 +19,7 @@ export class VentasController {
   @Roles('DUENO')
   @Post(':id/anular')
   @HttpCode(200)
-  anular(@Usuario() u: UsuarioToken, @Param('id', ParseIntPipe) id: number, @Body(new ZodPipe(anulacionSchema)) datos: AnulacionDto) {
+  anular(@Usuario() u: UsuarioToken, @Param('id', IdPipe) id: number, @Body(new ZodPipe(anulacionSchema)) datos: AnulacionDto) {
     return this.ventas.anular(u.tiendaId, u.id, id, datos);
   }
 

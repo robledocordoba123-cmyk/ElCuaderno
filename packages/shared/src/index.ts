@@ -23,6 +23,57 @@ export const loginSchema = z.object({
 });
 export type LoginDto = z.infer<typeof loginSchema>;
 
+const correo = z.string().trim().toLowerCase().email('Correo no válido').max(120, 'Correo demasiado largo');
+/** Contraseña nueva: mínimo 8 caracteres, con al menos una letra y un número. */
+export const claveNueva = z
+  .string()
+  .min(8, 'Mínimo 8 caracteres')
+  .max(72, 'Máximo 72 caracteres')
+  .regex(/[A-Za-zÁÉÍÓÚáéíóúÑñ]/, 'Debe tener al menos una letra')
+  .regex(/\d/, 'Debe tener al menos un número');
+
+/** Una tienda nueva se registra con su dueña. Ley 1581: debe aceptar la política de datos. */
+export const registroSchema = z.object({
+  tienda: texto(3, 60, 'El nombre de la tienda'),
+  nombre: texto(2, 60, 'Tu nombre'),
+  email: correo,
+  password: claveNueva,
+  aceptaPolitica: z.literal(true, { message: 'Debes aceptar la política de datos' }),
+});
+export type RegistroDto = z.infer<typeof registroSchema>;
+
+/** La dueña crea un cajero con una contraseña temporal que luego él cambia. */
+export const cajeroSchema = z.object({
+  nombre: texto(2, 60, 'El nombre'),
+  email: correo,
+  password: claveNueva,
+});
+export type CajeroDto = z.infer<typeof cajeroSchema>;
+
+export const estadoUsuarioSchema = z.object({ activo: z.boolean() });
+export const claveTemporalSchema = z.object({ password: claveNueva });
+export const cambioClaveSchema = z.object({
+  actual: z.string().min(1, 'Escribe tu contraseña actual'),
+  nueva: claveNueva,
+});
+export type CambioClaveDto = z.infer<typeof cambioClaveSchema>;
+
+/** Máximo de cajeros activos por tienda: una tienda de barrio rara vez tiene más. */
+export const MAXIMO_CAJEROS = 10;
+
+export interface MiembroEquipo {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: Rol;
+  activo: boolean;
+  /** Es quien está usando la app ahora. */
+  esUsted: boolean;
+  /** Cuenta de la demostración: no se puede desactivar ni cambiar su clave. */
+  deDemo: boolean;
+  creadoEn: string;
+}
+
 /**
  * Venta a granel: un producto "por peso" (queso, arroz suelto, carne) guarda el precio y el
  * costo POR KILO, como en las básculas, y el stock y las cantidades en GRAMOS (enteros).

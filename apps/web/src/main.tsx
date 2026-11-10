@@ -7,9 +7,11 @@ import './estilos.css';
 import { Acceso } from './paginas/Acceso';
 import { Bitacora } from './paginas/Bitacora';
 import { Caja } from './paginas/Caja';
+import { Equipo } from './paginas/Equipo';
 import { Fiados } from './paginas/Fiados';
 import { Inventario } from './paginas/Inventario';
 import { Privacidad } from './paginas/Privacidad';
+import { Registro } from './paginas/Registro';
 import { Reportes } from './paginas/Reportes';
 import { Vender } from './paginas/Vender';
 import { ProveedorSesion, useSesion } from './sesion';
@@ -25,12 +27,16 @@ function Rutas() {
       {/* La política de datos se puede leer sin iniciar sesión. */}
       <Route path="privacidad" element={<Privacidad />} />
       {!sesion ? (
-        <Route path="*" element={<Acceso />} />
+        <>
+          <Route path="registro" element={<Registro />} />
+          <Route path="*" element={<Acceso />} />
+        </>
       ) : (
         <Route element={<Marco />}>
           <Route index element={<Vender />} />
           <Route path="inventario" element={<Inventario />} />
           <Route path="fiados" element={<Fiados />} />
+          <Route path="cuenta" element={<Equipo />} />
           {esDueno && <Route path="caja" element={<Caja />} />}
           {esDueno && <Route path="bitacora" element={<Bitacora />} />}
           {esDueno && <Route path="reportes" element={<Reportes />} />}

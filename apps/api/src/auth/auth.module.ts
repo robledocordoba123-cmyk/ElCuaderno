@@ -5,11 +5,12 @@ import { config } from '../config';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { IntentosLogin } from './intentos';
+import { IntentosLogin, LimiteRegistros } from './intentos';
 
 @Module({
   imports: [JwtModule.register({ global: true, secret: config.jwtSecret, signOptions: { expiresIn: config.jwtDuracion } })],
   controllers: [AuthController],
-  providers: [AuthService, IntentosLogin, { provide: APP_GUARD, useClass: AuthGuard }],
+  providers: [AuthService, IntentosLogin, LimiteRegistros, { provide: APP_GUARD, useClass: AuthGuard }],
+  exports: [AuthService],
 })
 export class AuthModule {}

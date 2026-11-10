@@ -43,6 +43,13 @@
       "when": 1794187903756,
       "tag": "0005_granel",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794343989725,
+      "tag": "0006_equipo_y_registro",
+      "breakpoints": true
     }
   ]
 }

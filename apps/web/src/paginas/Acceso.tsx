@@ -1,6 +1,6 @@
 import { loginSchema } from '@elcuaderno/shared';
 import { Coffee, LogIn, Store, UserRound } from 'lucide-react';
-import { useEffect, useState, type ButtonHTMLAttributes, type FormEvent, type InputHTMLAttributes } from 'react';
+import { useEffect, useState, type ButtonHTMLAttributes, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ErrorApi } from '../api/cliente';
 import { Logo } from '../componentes/Marco';
@@ -63,15 +63,7 @@ export function Acceso() {
   return (
     <div className="flex min-h-dvh items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Espiral: los aros pasan por encima del borde de la hoja. */}
-        <div className="relative z-10 flex justify-around px-8" aria-hidden>
-          {Array.from({ length: 9 }, (_, i) => (
-            <span key={i} className="h-7 w-3 translate-y-3 rounded-full border-[3px] border-stone-900 bg-stone-100" />
-          ))}
-        </div>
-
-        <main className="hoja relative overflow-hidden rounded-md border-2 border-stone-900 bg-stone-50 pb-8 pl-14 pr-6 pt-10 shadow-[6px_6px_0_0_var(--color-stone-900)] sm:pl-16 sm:pr-10">
-          <span className="absolute inset-y-0 left-10 w-px bg-margen sm:left-12" aria-hidden />
+        <Hoja>
 
           <div className="flex items-start justify-between gap-3">
             <Logo />
@@ -103,12 +95,18 @@ export function Acceso() {
             </Boton>
           </form>
 
-          <p className="mt-6 text-xs text-stone-500">
+          <p className="mt-6 text-sm text-stone-700">
+            ¿Tu tienda todavía no tiene cuaderno?{' '}
+            <Link to="/registro" className="font-bold underline decoration-amber-400 decoration-2 underline-offset-2 hover:text-stone-900">
+              Regístrala gratis
+            </Link>
+          </p>
+          <p className="mt-3 text-xs text-stone-500">
             <Link to="/privacidad" className="underline hover:text-stone-900">
               Política de tratamiento de datos
             </Link>
           </p>
-        </main>
+        </Hoja>
 
         {MODO_DEMO && (
           <section className="mt-6 px-2" aria-label="Cuentas de demostración">
@@ -129,8 +127,27 @@ export function Acceso() {
   );
 }
 
+/** Hoja del cuaderno: espiral arriba, margen rojo y renglones. La usan el acceso y el registro. */
+export function Hoja({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {/* Espiral: los aros pasan por encima del borde de la hoja. */}
+      <div className="relative z-10 flex justify-around px-8" aria-hidden>
+        {Array.from({ length: 9 }, (_, i) => (
+          <span key={i} className="h-7 w-3 translate-y-3 rounded-full border-[3px] border-stone-900 bg-stone-100" />
+        ))}
+      </div>
+
+      <main className="hoja relative overflow-hidden rounded-md border-2 border-stone-900 bg-stone-50 pb-8 pl-14 pr-6 pt-10 shadow-[6px_6px_0_0_var(--color-stone-900)] sm:pl-16 sm:pr-10">
+        <span className="absolute inset-y-0 left-10 w-px bg-margen sm:left-12" aria-hidden />
+      {children}
+      </main>
+    </>
+  );
+}
+
 /** Campo escrito sobre el renglón: sin caja, solo la línea, como en el papel. */
-function Renglon({ etiqueta, error, ...props }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; error?: string }) {
+export function Renglon({ etiqueta, error, ...props }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; error?: string }) {
   return (
     <label className="block">
       <span className="block text-xs font-semibold uppercase tracking-wider text-stone-500">{etiqueta}</span>

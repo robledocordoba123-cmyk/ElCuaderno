@@ -44,3 +44,34 @@ export class IntentosLogin {
     this.fallos.delete(email);
   }
 }
+
+const MAXIMO_REGISTROS_POR_HORA = 20;
+const UNA_HORA_MS = 60 * 60 * 1000;
+
+/**
+ * Límite de tiendas nuevas: 20 por hora para toda la API. Es global y no por IP por la misma
+ * razón que el de arriba (el proxy de Vercel). Frena a un script que quiera llenar la base de
+ * tiendas basura sin estorbarle a una persona que se registra.
+ */
+@Injectable()
+export class LimiteRegistros {
+  private momentos: number[] = [];
+
+  revisar(ahora = Date.now()) {
+    this.momentos = this.momentos.filter((m) => ahora - m < UNA_HORA_MS);
+    if (this.momentos.length >= MAXIMO_REGISTROS_POR_HORA) {
+      throw new HttpException(
+        { statusCode: 429, message: 'Se registraron muchas tiendas en la última hora. Inténtalo más tarde.' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
+  anotar(ahora = Date.now()) {
+    this.momentos.push(ahora);
+  }
+
+  reiniciar() {
+    this.momentos = [];
+  }
+}

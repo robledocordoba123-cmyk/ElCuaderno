@@ -1,0 +1,7 @@
+# ElCuaderno: se pueden indexar el acceso, el registro y la política de datos.
+# Las pantallas de la tienda piden iniciar sesión y no tienen nada que indexar.
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://elcuaderno-demo.vercel.app/sitemap.xml

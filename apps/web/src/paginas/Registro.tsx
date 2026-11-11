@@ -73,7 +73,7 @@ export function Registro() {
                   política de tratamiento de datos
                 </Link>{' '}
                 (Ley 1581 de 2012).
-                {errores.aceptaPolitica && <span className="mt-1 block text-xs font-medium text-margen">{errores.aceptaPolitica}</span>}
+                {errores.aceptaPolitica && <span className="mt-1 block text-xs font-medium text-margen-tinta">{errores.aceptaPolitica}</span>}
               </span>
             </label>
 

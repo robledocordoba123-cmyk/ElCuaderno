@@ -31,7 +31,8 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 - **Seguridad.** La sesión viaja en una cookie `httpOnly` y `SameSite=Strict` (JavaScript nunca ve el token), porque la web llama a `/api` en su mismo dominio y Vercel la reenvía a Render. El login se bloquea tras 5 intentos fallidos por correo, la API manda cabeceras de seguridad con `helmet` y la web tiene CSP propia en [`vercel.json`](apps/web/vercel.json).
 - **Bitácora inmutable.** Cada cambio que sale bien (venta, abono, precio, cliente) queda anotado con quién y cuándo. Un trigger de PostgreSQL impide editar o borrar filas ([`0001_seguridad_y_datos.sql`](apps/api/drizzle/0001_seguridad_y_datos.sql)).
 - **Datos de los vecinos (Ley 1581 de 2012).** No se guarda un cliente sin su autorización, hay [política de datos](https://elcuaderno-demo.vercel.app/privacidad) y la dueña puede borrar los datos de quien ya no debe: se eliminan nombre y celular, y sus compras pasadas quedan en la caja sin datos personales.
-- **Una interfaz con identidad propia.** Se inspira en el cuaderno real de la tienda: papel con renglones, tinta azul, resaltador amarillo, productos como etiquetas de precio y la venta como la tirilla de una caja registradora. El acceso es una hoja del cuaderno con espiral y margen rojo, y las cuentas de demostración son notas adhesivas. La letra es Lexend, hecha para leer con facilidad, con Caveat (a mano) solo para lo que se anota. Los colores viven como variables en [`estilos.css`](apps/web/src/estilos.css).
+- **Rápida, encontrable y accesible.** Las fuentes se sirven desde el mismo sitio (antes Google Fonts frenaba la primera pintura) y cada pantalla se descarga cuando se abre. Tiene robots.txt, sitemap, datos estructurados, imagen para compartir, `llms.txt` y manifiesto ARD para agentes de IA. axe-core revisa WCAG 2.1 AA en todas las pantallas dentro de las pruebas: así aparecieron y se arreglaron un rojo y un gris con poco contraste, botones sin nombre en el celular y la gráfica sin foco visible. Los modales se cierran con Escape y devuelven el foco, y se respeta "reducir movimiento".
+- **Una interfaz con identidad propia.** Se inspira en el cuaderno real de la tienda: papel con renglones, tinta azul, resaltador amarillo, productos como etiquetas de precio y la venta como la tirilla de una caja registradora. El acceso es una hoja del cuaderno con espiral y margen rojo, y las cuentas de demostración son notas adhesivas. La letra es Lexend, hecha para leer con facilidad, con Caveat (a mano) solo para lo que se anota; ambas servidas desde el propio sitio. Los colores viven como variables en [`estilos.css`](apps/web/src/estilos.css).
 
 ## Stack
 
@@ -41,7 +42,7 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 | API | NestJS 11, Drizzle ORM, PostgreSQL 16, JWT, bcrypt |
 | Validación | Zod, compartido entre frontend y backend |
 | Frontend | React 19, Vite, Tailwind CSS 4, TanStack Query, React Router |
-| Pruebas | Jest + Supertest contra PostgreSQL real (90), Vitest para la lógica compartida (12) y Playwright de punta a punta en escritorio y celular (10) |
+| Pruebas | Jest + Supertest contra PostgreSQL real (90), Vitest para la lógica compartida (12) y Playwright de punta a punta en escritorio y celular (14, con axe-core para accesibilidad en todas las pantallas) |
 | Calidad | ESLint (typescript-eslint + reglas de React) y Dependabot semanal |
 | Infraestructura | Docker Compose, GitHub Actions, Render, Neon, Vercel |
 

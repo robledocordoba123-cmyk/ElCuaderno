@@ -88,7 +88,7 @@ function Base({ valor, editable, pendiente, guardar }: { valor: number; editable
                 setTexto(String(valor || ''));
                 setEditando(true);
               }}
-              className="rounded-md p-1 text-stone-400 hover:bg-stone-200/60 hover:text-stone-900"
+              className="rounded-md p-1 text-stone-500 hover:bg-stone-200/60 hover:text-stone-900"
               aria-label="Cambiar la base"
               title="Cambiar la base"
             >
@@ -137,7 +137,7 @@ function Gastos({
       <ul className="mt-2 space-y-1.5">
         {r.listaGastos.map((g) => (
           <li key={g.id} className="flex items-center gap-2 text-sm">
-            <Minus size={13} className="shrink-0 text-margen" aria-hidden />
+            <Minus size={13} className="shrink-0 text-margen-tinta" aria-hidden />
             <span className="min-w-0 flex-1 truncate text-stone-700" title={`${g.usuario} · ${hora(g.en)}`}>
               {g.descripcion}
             </span>
@@ -146,7 +146,7 @@ function Gastos({
               <button
                 onClick={() => mutar({ ruta: `gastos/${g.id}`, metodo: 'DELETE' })}
                 disabled={pendiente}
-                className="shrink-0 rounded p-0.5 text-stone-400 hover:text-margen"
+                className="shrink-0 rounded p-0.5 text-stone-500 hover:text-margen-tinta"
                 aria-label={`Quitar el gasto ${g.descripcion}`}
                 title="Quitar gasto mal anotado"
               >
@@ -155,7 +155,7 @@ function Gastos({
             )}
           </li>
         ))}
-        {r.listaGastos.length === 0 && <li className="text-sm text-stone-400">Ningún gasto.</li>}
+        {r.listaGastos.length === 0 && <li className="text-sm text-stone-500">Ningún gasto.</li>}
       </ul>
       {editable && (
         <form onSubmit={alAnotar} className="mt-3 space-y-2" noValidate>
@@ -226,7 +226,7 @@ function Cierre({ resumen: r, pendiente, cerrar }: { resumen: ResumenCaja; pendi
 function Diferencia({ valor }: { valor: number }) {
   if (valor === 0) return <p className="mt-2 font-semibold text-emerald-700">Cuadra exacto.</p>;
   return (
-    <p className={`mt-2 font-semibold ${valor > 0 ? 'text-emerald-700' : 'text-margen'}`}>
+    <p className={`mt-2 font-semibold ${valor > 0 ? 'text-emerald-700' : 'text-margen-tinta'}`}>
       {valor > 0 ? 'Sobran' : 'Faltan'} {formatearPesos(Math.abs(valor))}
     </p>
   );

@@ -8,7 +8,7 @@
 */
 @theme {
   /* Lexend se diseñó para leer con facilidad: la usan personas de todas las edades en el mostrador. */
-  --font-sans: 'Lexend', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Lexend Variable', 'Lexend', ui-sans-serif, system-ui, sans-serif;
   /* Letra a mano, solo para lo que se anota en el cuaderno (títulos del acceso, notas). */
   --font-mano: 'Caveat', 'Segoe Print', cursive;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -38,6 +38,8 @@
   --color-amber-950: #2e2204;
 
   --color-margen: #e0563f;
+  /* El mismo rojo, más oscuro, para texto y botones: 5,5:1 sobre el papel (AA). */
+  --color-margen-tinta: #b83a27;
   /* Tinta de bolígrafo azul: color de las gráficas (validado contra el papel: luminosidad, croma y contraste). */
   --color-boligrafo: #2f56b0;
 }
@@ -74,4 +76,22 @@ body {
 .hoja {
   background-image: repeating-linear-gradient(transparent 0 31px, rgb(27 35 64 / 0.09) 31px 32px);
   background-position: 0 14px;
+}
+
+/* Quien pide menos movimiento en su sistema no ve animaciones ni transiciones. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Foco visible para quien usa teclado: un subrayado de resaltador alrededor de lo enfocado. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-amber-500);
+  outline-offset: 2px;
 }

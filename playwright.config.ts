@@ -11,7 +11,7 @@ export default defineConfig({
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
-  use: { baseURL: 'http://localhost:4174', trace: 'retain-on-failure', ...navegador },
+  use: { baseURL: 'http://localhost:4184', trace: 'retain-on-failure', ...navegador },
   projects: [
     { name: 'escritorio', use: { ...devices['Desktop Chrome'], ...navegador } },
     { name: 'celular', use: { ...devices['Pixel 7'], ...navegador } },
@@ -21,13 +21,13 @@ export default defineConfig({
       // Migra, siembra la demo y arranca la API en un puerto propio para no chocar con la de desarrollo.
       command: 'node apps/api/dist/db/migrar.js && node apps/api/dist/demo/sembrar.js && node apps/api/dist/main.js',
       url: 'http://localhost:3199/api/salud',
-      env: { DATABASE_URL: BD, PORT: '3199', JWT_SECRET: 'secreto-solo-para-e2e-0123456789-abcdefghij', CORS_ORIGIN: 'http://localhost:4174' },
+      env: { DATABASE_URL: BD, PORT: '3199', JWT_SECRET: 'secreto-solo-para-e2e-0123456789-abcdefghij', CORS_ORIGIN: 'http://localhost:4184' },
       reuseExistingServer: false,
       timeout: 120_000,
     },
     {
-      command: 'npm run preview -w @elcuaderno/web -- --port 4174 --strictPort',
-      url: 'http://localhost:4174',
+      command: 'npm run preview -w @elcuaderno/web -- --port 4184 --strictPort',
+      url: 'http://localhost:4184',
       env: { API_URL: 'http://localhost:3199' },
       reuseExistingServer: false,
       timeout: 60_000,

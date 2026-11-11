@@ -47,7 +47,7 @@ export function Bitacora() {
                 </span>
               </li>
             ))}
-            {filas.length === 0 && <li className="px-4 py-10 text-center text-stone-400">Todavía no hay movimientos.</li>}
+            {filas.length === 0 && <li className="px-4 py-10 text-center text-stone-500">Todavía no hay movimientos.</li>}
           </ul>
         </Tarjeta>
       )}

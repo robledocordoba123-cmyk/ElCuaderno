@@ -79,7 +79,7 @@ function Cajeros() {
                 {u.rol === 'CAJERO' && !u.deDemo && (
                   <div className="flex gap-2">
                     {u.activo && (
-                      <Boton variante="secundario" className="px-3" onClick={() => setClavePara(u)} aria-label={`Contraseña temporal para ${u.nombre}`}>
+                      <Boton variante="secundario" className="px-3" onClick={() => setClavePara(u)} aria-label={`Clave temporal para ${u.nombre}`}>
                         <KeyRound size={16} /> <span className="hidden sm:inline">Clave</span>
                       </Boton>
                     )}

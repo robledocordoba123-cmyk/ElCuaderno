@@ -36,7 +36,7 @@ const SECCIONES: [string, string][] = [
 
 export function Privacidad() {
   return (
-    <div className="min-h-dvh px-4 py-10">
+    <main className="min-h-dvh px-4 py-10">
       <article className="mx-auto max-w-2xl rounded-md border-2 border-stone-900 bg-stone-50 p-6 sombra-papel sm:p-10">
         <Logo />
         <p className="mt-8 font-mono text-xs uppercase tracking-[0.2em] text-stone-500">Ley 1581 de 2012 · versión 1.0</p>
@@ -53,6 +53,6 @@ export function Privacidad() {
           <ArrowLeft size={15} /> Volver a ElCuaderno
         </Link>
       </article>
-    </div>
+    </main>
   );
 }

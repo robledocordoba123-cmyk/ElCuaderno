@@ -108,7 +108,7 @@ export function Bascula({
         <span className="text-2xl font-bold text-stone-900">{formatearPesos(cobro)}</span>
       </div>
       <p className="mt-1 text-xs text-stone-500">Se redondea a los $ 50 más cercanos.</p>
-      {problema && <p className="mt-2 text-sm font-semibold text-margen">{problema}</p>}
+      {problema && <p className="mt-2 text-sm font-semibold text-margen-tinta">{problema}</p>}
 
       <div className="mt-5 flex gap-2">
         <Boton variante="secundario" onClick={alCerrar} className="flex-1">

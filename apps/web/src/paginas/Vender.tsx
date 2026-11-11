@@ -153,7 +153,7 @@ export function Vender() {
                       {formatearPesos(p.precio)}
                       {p.porPeso && <span className="text-xs font-semibold text-stone-500"> /kg</span>}
                     </span>
-                    <span className={`text-xs ${p.bajoStock ? 'font-semibold text-margen' : 'text-stone-500'}`}>
+                    <span className={`text-xs ${p.bajoStock ? 'font-semibold text-margen-tinta' : 'text-stone-500'}`}>
                       {agotado ? 'Agotado' : `Quedan ${p.porPeso ? formatearCantidad(p.stock, true) : p.stock}`}
                       {p.porPeso && !agotado && <Scale size={11} className="ml-1 inline align-[-1px]" aria-label="Se vende por peso" />}
                     </span>
@@ -187,7 +187,7 @@ export function Vender() {
             )}
 
             {lineas.length === 0 ? (
-              <p className="py-6 text-center text-xs uppercase tracking-wider text-stone-400">Todavía no hay productos</p>
+              <p className="py-6 text-center text-xs uppercase tracking-wider text-stone-500">Todavía no hay productos</p>
             ) : (
               <ul className="space-y-2.5">
                 {lineas.map(({ producto, cantidad }) => (

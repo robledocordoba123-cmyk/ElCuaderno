@@ -132,7 +132,7 @@ export function Reportes() {
             <h2 className="mb-2 font-bold text-stone-900">Lo más vendido</h2>
             <Tarjeta>
               {r.masVendidos.length === 0 ? (
-                <p className="text-sm text-stone-400">Sin ventas en este rango.</p>
+                <p className="text-sm text-stone-500">Sin ventas en este rango.</p>
               ) : (
                 <ol className="divide-y divide-dashed divide-stone-300">
                   {r.masVendidos.map((m, i) => (
@@ -207,11 +207,12 @@ function GraficaVentas({ dias }: { dias: ReportePeriodo['dias'] }) {
                 <button
                   key={d.dia}
                   type="button"
-                  className="group relative flex h-full min-w-0 flex-1 items-end justify-center outline-none"
+                  className="group relative flex h-full min-w-0 flex-1 items-end justify-center rounded-sm"
                   onPointerEnter={() => setActivo(i)}
                   onFocus={() => setActivo(i)}
                   onBlur={() => setActivo(null)}
-                  aria-label={`${diaLargo(d.dia)}: vendido ${formatearPesos(d.vendido)}, ganancia ${formatearPesos(d.ganancia)}, ${d.ventas} ventas`}
+                  // El día del máximo muestra la cifra corta encima: va de primera en el nombre para que coincida.
+                  aria-label={`${i === indiceMaximo ? `${compacto(d.vendido)}, el día que más se vendió. ` : ''}${diaLargo(d.dia)}: vendido ${formatearPesos(d.vendido)}, ganancia ${formatearPesos(d.ganancia)}, ${d.ventas} ventas`}
                 >
                   {d.vendido > 0 && (
                     <span
@@ -221,6 +222,7 @@ function GraficaVentas({ dias }: { dias: ReportePeriodo['dias'] }) {
                   )}
                   {i === indiceMaximo && activo === null && (
                     <span
+                      aria-hidden
                       className="pointer-events-none absolute left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] font-semibold text-stone-700"
                       style={{ bottom: alto + 4 }}
                     >
@@ -228,8 +230,9 @@ function GraficaVentas({ dias }: { dias: ReportePeriodo['dias'] }) {
                     </span>
                   )}
                   {activo === i && (
+                    // El lector de pantalla ya oye todo esto en el nombre de la columna (aria-label).
                     <span
-                      role="tooltip"
+                      aria-hidden
                       className={`pointer-events-none absolute z-10 w-max rounded-md border border-stone-900 bg-stone-50 px-2.5 py-1.5 text-left text-xs shadow-[2px_2px_0_0_var(--color-stone-900)] ${
                         i > dias.length / 2 ? 'right-1/2' : 'left-1/2'
                       }`}

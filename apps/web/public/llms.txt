@@ -1,0 +1,16 @@
+# ElCuaderno
+
+> Aplicación web para tiendas de barrio en Colombia: ventas en efectivo, Nequi o fiado, inventario (también a granel, por peso), cupos de fiado de los vecinos, caja del día con cierre y equipo de cajeros. Es un proyecto de portafolio de Manuela Córdoba Robledo; esta es la demostración pública.
+
+La "Tienda Doña Rosa" de la demostración se abre con un clic desde la página de acceso, como dueña o como cajero. Cualquier persona puede registrar una tienda de prueba; esas tiendas se borran solas a los 7 días.
+
+## Páginas públicas
+
+- [Acceso y cuentas de demostración](https://elcuaderno-demo.vercel.app/): entrar como dueña o cajero de la tienda de ejemplo.
+- [Registrar una tienda](https://elcuaderno-demo.vercel.app/registro): crea una tienda vacía con su dueña.
+- [Política de tratamiento de datos](https://elcuaderno-demo.vercel.app/privacidad): cómo se manejan los datos de los vecinos (Ley 1581 de 2012).
+
+## Código y documentación
+
+- [Repositorio en GitHub](https://github.com/robledocordoba123-cmyk/ElCuaderno): TypeScript, NestJS, Drizzle, PostgreSQL, React y Zod compartido.
+- [Diseño: historias, reglas de negocio y modelo de datos](https://github.com/robledocordoba123-cmyk/ElCuaderno/blob/main/docs/01-diseno.md)

@@ -34,7 +34,7 @@ export function Fiados() {
         detalle={`En la calle: ${formatearPesos(totalFiado)}`}
         accion={
           esDueno && (
-            <Boton onClick={() => setNuevo(true)}>
+            <Boton onClick={() => setNuevo(true)} aria-label="Nuevo cliente">
               <UserPlus size={18} /> <span className="hidden sm:inline">Nuevo cliente</span>
             </Boton>
           )
@@ -80,7 +80,7 @@ export function Fiados() {
               </li>
             );
           })}
-          {lista.length === 0 && <p className="py-10 text-center text-stone-400">Nadie debe nada. ¡Qué belleza!</p>}
+          {lista.length === 0 && <p className="py-10 text-center text-stone-500">Nadie debe nada. ¡Qué belleza!</p>}
         </ul>
       )}
 
@@ -179,7 +179,7 @@ function DetalleCliente({ id, alCerrar }: { id: number; alCerrar: () => void }) 
                   </span>
                 </li>
               ))}
-              {c.movimientos.length === 0 && <li className="py-4 text-center text-sm text-stone-400">Sin movimientos todavía.</li>}
+              {c.movimientos.length === 0 && <li className="py-4 text-center text-sm text-stone-500">Sin movimientos todavía.</li>}
             </ul>
           </div>
 
@@ -257,7 +257,7 @@ function NuevoCliente({ alCerrar }: { alCerrar: () => void }) {
             .
           </span>
         </label>
-        {errores.autorizaDatos && <span className="block text-xs font-medium text-margen">{errores.autorizaDatos}</span>}
+        {errores.autorizaDatos && <span className="block text-xs font-medium text-margen-tinta">{errores.autorizaDatos}</span>}
         {errores.general && <Aviso>{errores.general}</Aviso>}
         <Boton type="submit" disabled={crear.isPending} className="w-full">
           Guardar cliente

@@ -14,7 +14,14 @@ En la tienda de barrio se vende fiado y se anota en un cuaderno. Ahí se pierden
 |---|---|---|
 | ![Caja](docs/capturas/02-caja.png) | ![Fiados](docs/capturas/03-fiados.png) | ![Celular](docs/capturas/04-celular.png) |
 
-El diseño completo (historias de usuario, reglas de negocio y modelo de datos) está en [`docs/01-diseno.md`](docs/01-diseno.md).
+| Reportes por rango | Equipo de la tienda |
+|---|---|
+| ![Reportes](docs/capturas/05-reportes.png) | ![Equipo](docs/capturas/06-equipo.png) |
+
+**Documentación:**
+- [Diseño](docs/01-diseno.md): historias de usuario, reglas de negocio y alcance.
+- [Arquitectura](docs/arquitectura.md): diagramas de las piezas, la sesión, una venta paso a paso y el modelo de datos.
+- [Decisiones](docs/decisiones.md): 17 decisiones con sus alternativas y lo que cuestan.
 
 ## Lo más interesante técnicamente
 
@@ -49,9 +56,10 @@ El diseño completo (historias de usuario, reglas de negocio y modelo de datos) 
 ```
 ElCuaderno/
 ├── packages/shared/   esquemas Zod, tipos y formato de pesos
-├── apps/api/          NestJS: auth, productos, clientes, ventas, caja (+ migraciones y demo)
-├── apps/web/          React: vender, inventario, fiados, caja
-└── docs/              diseño y capturas
+├── apps/api/          NestJS: auth, usuarios, productos, clientes, ventas, caja, bitácora (+ migraciones y demo)
+├── apps/web/          React: vender, inventario, fiados, caja, reportes, equipo, registro
+├── e2e/               Playwright: recorridos y accesibilidad (axe)
+└── docs/              diseño, arquitectura, decisiones y capturas
 ```
 
 ## API

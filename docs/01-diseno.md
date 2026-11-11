@@ -19,7 +19,21 @@ En Colombia, la tienda de barrio vende a crédito ("fiado") a los vecinos y lo a
 - Caja del día: cuánto entró por cada medio, cuánto se fió, cuánto se abonó y la ganancia.
 - Reportes: productos más vendidos y lista de deudores.
 
-**No incluye (a propósito):** facturación electrónica, varias tiendas ni pagos en línea.
+**No incluye (a propósito):** facturación electrónica ni pagos en línea.
+
+### Lo que se agregó después de la versión 1
+
+- **Varias tiendas:** cualquiera registra la suya y queda como dueña. Cada consulta filtra por la tienda del token (el `tienda_id` que ya tenía cada tabla).
+- **Equipo:** la dueña crea cajeros, les pone una clave temporal y los desactiva. Desactivarlos les cierra la sesión de inmediato.
+- **Caja completa:** base del día, gastos que salen del cajón y cierre con lo contado y la diferencia.
+- **Anular ventas** de hoy, con motivo.
+- **Llegada de mercancía** con proveedor y costo promedio ponderado.
+- **Venta a granel:** por peso o "por plata", con báscula de ¼ lb, ½ lb, 1 lb y 1 kg.
+- **Reportes** por semana, mes o rango.
+- **Bitácora** inmutable de quién hizo qué.
+- **Datos de los vecinos** según la Ley 1581: autorización y supresión.
+
+La arquitectura actual está en [`arquitectura.md`](arquitectura.md) y cada decisión, con sus alternativas, en [`decisiones.md`](decisiones.md).
 
 ## 3. Historias de usuario
 
@@ -110,9 +124,9 @@ Cada tabla lleva `tienda_id` para que la base ya esté lista para varias tiendas
 | Validación compartida | Zod en `packages/shared` | Un solo esquema valida el formulario en React y el cuerpo de la petición en la API |
 | API | NestJS 11 | Módulos, inyección de dependencias y guardas de roles: el estándar para Node.js en empresas |
 | Datos | Drizzle ORM + PostgreSQL 16 | Consultas tipadas y SQL explícito donde importa (el descuento de stock) |
-| Autenticación | JWT + bcrypt | Sesión sin estado, con rol dentro del token |
+| Autenticación | JWT en cookie httpOnly + bcrypt | Rol dentro del token y versión de sesión revisada en cada petición, para cerrar sesiones al instante ([D-07](decisiones.md)) |
 | Frontend | React 19 + Vite + Tailwind + TanStack Query | Pensado primero para el celular del mostrador |
-| Pruebas | Jest + Supertest contra PostgreSQL real | Incluye una prueba de concurrencia sobre el último producto |
+| Pruebas | Jest + Supertest contra PostgreSQL real, Vitest y Playwright con axe | Incluye una prueba de concurrencia sobre el último producto y accesibilidad en todas las pantallas |
 | Infraestructura | Docker, GitHub Actions, Render, Neon, Vercel | El mismo flujo de los otros proyectos |
 
 ```

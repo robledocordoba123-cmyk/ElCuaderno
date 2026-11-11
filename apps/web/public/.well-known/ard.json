@@ -1,0 +1,17 @@
+{
+  "entries": [
+    {
+      "identifier": "urn:air:elcuaderno-demo.vercel.app:app:elcuaderno",
+      "displayName": "ElCuaderno, la tienda de barrio en el celular",
+      "type": "text/markdown",
+      "url": "https://elcuaderno-demo.vercel.app/llms.txt",
+      "description": "Demostración de una aplicación de ventas, inventario y fiados para tiendas de barrio en Colombia.",
+      "representativeQueries": [
+        "aplicación para anotar fiados de una tienda de barrio",
+        "software de inventario y caja para tienda en Colombia",
+        "demo de punto de venta con ventas a granel por peso"
+      ],
+      "tags": ["tienda de barrio", "punto de venta", "fiados", "inventario", "Colombia"]
+    }
+  ]
+}

@@ -105,7 +105,7 @@ export function Caja() {
               <h2 className="mb-2 font-bold text-stone-900">Lo más vendido</h2>
               <Tarjeta>
                 {r.masVendidos.length === 0 ? (
-                  <p className="text-sm text-stone-400">Sin ventas este día.</p>
+                  <p className="text-sm text-stone-500">Sin ventas este día.</p>
                 ) : (
                   <ol className="space-y-2">
                     {r.masVendidos.map((m, i) => (
@@ -127,7 +127,7 @@ export function Caja() {
                   {(ventas.data ?? []).map((v) => (
                     <li key={v.id} className={`px-4 py-2.5 text-sm ${v.anulada ? 'bg-stone-100/70' : ''}`}>
                       <div className={`flex items-center gap-3 ${v.anulada ? 'opacity-60' : ''}`}>
-                        <span className="w-20 shrink-0 whitespace-nowrap text-stone-400">{hora(v.creadaEn)}</span>
+                        <span className="w-20 shrink-0 whitespace-nowrap text-stone-500">{hora(v.creadaEn)}</span>
                         <span className={`min-w-0 flex-1 truncate text-stone-700 ${v.anulada ? 'line-through' : ''}`}>
                           {v.items.map((i) => `${i.porPeso ? formatearCantidad(i.cantidad, true) + ' de' : i.cantidad} ${i.producto}`).join(', ')}
                         </span>
@@ -140,7 +140,7 @@ export function Caja() {
                         {!v.anulada && dia === hoy && !r.cierre && (
                           <button
                             onClick={() => setAnulando(v)}
-                            className="shrink-0 rounded-md p-1 text-stone-400 transition hover:bg-red-50 hover:text-margen"
+                            className="shrink-0 rounded-md p-1 text-stone-500 transition hover:bg-red-50 hover:text-margen-tinta"
                             aria-label={`Anular la venta de las ${hora(v.creadaEn)}`}
                             title="Anular venta"
                           >
@@ -149,13 +149,13 @@ export function Caja() {
                         )}
                       </div>
                       {v.anulada && (
-                        <p className="mt-1 pl-23 text-xs font-medium text-margen">
+                        <p className="mt-1 pl-23 text-xs font-medium text-margen-tinta">
                           Anulada por {v.anulada.por} a las {hora(v.anulada.en)}: {v.anulada.motivo}
                         </p>
                       )}
                     </li>
                   ))}
-                  {ventas.data?.length === 0 && <li className="px-4 py-6 text-center text-sm text-stone-400">Sin ventas este día.</li>}
+                  {ventas.data?.length === 0 && <li className="px-4 py-6 text-center text-sm text-stone-500">Sin ventas este día.</li>}
                 </ul>
               </Tarjeta>
             </section>
@@ -233,7 +233,7 @@ function Dato({ icono: Icono, titulo, valor, nota }: { icono: typeof Wallet; tit
         <Icono size={16} /> {titulo}
       </p>
       <p className="mt-1 font-mono text-2xl font-bold tracking-tight text-stone-900">{formatearPesos(valor)}</p>
-      {nota && <p className="text-xs text-stone-400">{nota}</p>}
+      {nota && <p className="text-xs text-stone-500">{nota}</p>}
     </Tarjeta>
   );
 }

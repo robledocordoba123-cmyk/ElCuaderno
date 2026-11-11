@@ -11,6 +11,9 @@
   },
   "dependencies": {
     "@elcuaderno/shared": "1.0.0",
+    "@fontsource-variable/lexend": "^5.3.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "@tanstack/react-query": "^5.104.0",
     "lucide-react": "^1.49.0",
     "react": "^19.3.0",

@@ -158,7 +158,7 @@ export function Renglon({ etiqueta, error, ...props }: InputHTMLAttributes<HTMLI
           error ? 'border-margen' : 'border-stone-300'
         }`}
       />
-      {error && <span className="mt-1 block text-xs font-medium text-margen">{error}</span>}
+      {error && <span className="mt-1 block text-xs font-medium text-margen-tinta">{error}</span>}
     </label>
   );
 }

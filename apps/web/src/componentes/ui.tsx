@@ -1,5 +1,5 @@
 // Piezas de interfaz reutilizables, con el estilo del cuaderno: papel, tinta y resaltador.
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
+import { useEffect, useRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
 
 export function Boton({
   variante = 'principal',
@@ -9,7 +9,7 @@ export function Boton({
   const estilos = {
     principal: 'border-2 border-stone-900 bg-amber-400 text-stone-900 sombra-tinta hover:bg-amber-300',
     secundario: 'border-2 border-stone-900 bg-stone-50 text-stone-900 sombra-tinta hover:bg-white',
-    peligro: 'border-2 border-stone-900 bg-margen text-white sombra-tinta hover:brightness-110',
+    peligro: 'border-2 border-stone-900 bg-margen-tinta text-white sombra-tinta hover:brightness-110',
     fantasma: 'text-stone-600 hover:bg-stone-200/60',
   }[variante];
   const presionar = variante === 'fantasma' ? '' : 'active:translate-x-[3px] active:translate-y-[3px] active:shadow-none';
@@ -36,7 +36,7 @@ export function Campo({
           error ? 'border-margen' : 'border-stone-300 focus:border-stone-900'
         }`}
       />
-      {error && <span className="mt-1 block text-xs font-medium text-margen">{error}</span>}
+      {error && <span className="mt-1 block text-xs font-medium text-margen-tinta">{error}</span>}
     </label>
   );
 }
@@ -84,10 +84,33 @@ export function Cargando() {
 }
 
 export function Modal({ titulo, abierto, alCerrar, children }: { titulo: string; abierto: boolean; alCerrar: () => void; children: ReactNode }) {
+  const caja = useRef<HTMLDivElement>(null);
+  const cerrar = useRef(alCerrar);
+  useEffect(() => {
+    cerrar.current = alCerrar;
+  }, [alCerrar]);
+
+  // Al abrir: el foco entra al primer campo (o botón) y Escape cierra.
+  // Al cerrar: el foco vuelve a lo que se estaba usando, para quien navega con teclado.
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const antes = document.activeElement as HTMLElement | null;
+    const primero = caja.current?.querySelector<HTMLElement>('input, select, textarea, button:not([aria-label="Cerrar"])');
+    (primero ?? caja.current)?.focus();
+    const alTeclear = (e: KeyboardEvent) => e.key === 'Escape' && cerrar.current();
+    document.addEventListener('keydown', alTeclear);
+    return () => {
+      document.removeEventListener('keydown', alTeclear);
+      antes?.focus?.();
+    };
+  }, [abierto]);
+
   if (!abierto) return null;
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-stone-950/50 p-0 sm:items-center sm:p-4" onClick={alCerrar}>
       <div
+        ref={caja}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-label={titulo}

@@ -41,7 +41,7 @@ export function Inventario() {
         detalle={`${productos.data?.length ?? 0} productos · ${bajos} por acabarse`}
         accion={
           esDueno && (
-            <Boton onClick={() => setEditando('nuevo')}>
+            <Boton onClick={() => setEditando('nuevo')} aria-label="Nuevo producto">
               <Plus size={18} /> <span className="hidden sm:inline">Nuevo producto</span>
             </Boton>
           )
@@ -67,7 +67,7 @@ export function Inventario() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-stone-900">
                     {p.nombre}
-                    {p.porPeso && <Scale size={14} className="ml-1.5 inline align-[-2px] text-stone-400" aria-label="Se vende por peso" />}
+                    {p.porPeso && <Scale size={14} className="ml-1.5 inline align-[-2px] text-stone-500" aria-label="Se vende por peso" />}
                   </p>
                   <p className="text-sm text-stone-500">
                     {formatearPesos(p.precio)}
@@ -76,8 +76,8 @@ export function Inventario() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className={`font-mono text-lg font-bold ${p.bajoStock ? 'text-margen' : 'text-stone-900'}`}>{verStock(p, p.stock)}</p>
-                  <p className="text-xs text-stone-400">mín. {verStock(p, p.stockMinimo)}</p>
+                  <p className={`font-mono text-lg font-bold ${p.bajoStock ? 'text-margen-tinta' : 'text-stone-900'}`}>{verStock(p, p.stock)}</p>
+                  <p className="text-xs text-stone-500">mín. {verStock(p, p.stockMinimo)}</p>
                 </div>
                 {esDueno && (
                   <div className="flex gap-1">
@@ -100,7 +100,7 @@ export function Inventario() {
               </Tarjeta>
             </li>
           ))}
-          {lista.length === 0 && <p className="py-10 text-center text-stone-400">Nada por aquí.</p>}
+          {lista.length === 0 && <p className="py-10 text-center text-stone-500">Nada por aquí.</p>}
         </ul>
       )}
 
@@ -327,7 +327,7 @@ function FormularioEntrada({ producto, alCerrar }: { producto: Producto; alCerra
               </span>
             </li>
           ))}
-          {historial.data?.length === 0 && <li className="text-stone-400">Todavía no hay llegadas registradas.</li>}
+          {historial.data?.length === 0 && <li className="text-stone-500">Todavía no hay llegadas registradas.</li>}
         </ul>
       </div>
     </Modal>

@@ -1,7 +1,9 @@
 // Estructura de la app: barra superior de tinta con pestañas en computador y barra inferior en el celular.
 import { BookOpen, Calculator, LogOut, Package, ShoppingCart, UserRound, Users } from 'lucide-react';
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { Suspense } from 'react';
 import { Tropiezo } from './Tropiezo';
+import { Cargando } from './ui';
 import { useSesion } from '../sesion';
 
 export function Marco() {
@@ -64,7 +66,9 @@ export function Marco() {
       <main className="mx-auto w-full max-w-6xl px-4 pb-40 pt-6 md:px-8 md:pb-12 md:pt-8">
         {/* Si una pantalla falla, la barra sigue: cambiar de pestaña la vuelve a intentar. */}
         <Tropiezo key={pathname}>
-          <Outlet />
+          <Suspense fallback={<Cargando />}>
+            <Outlet />
+          </Suspense>
         </Tropiezo>
       </main>
 
